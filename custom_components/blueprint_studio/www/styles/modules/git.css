@@ -79,6 +79,81 @@
       transform: translateY(1px);
     }
 
+    /* Visual Diff Viewer */
+    .diff-viewer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 44px;
+      padding: 6px 12px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .diff-viewer-summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .diff-viewer-summary .material-icons {
+      font-size: 18px;
+      color: var(--warning-color);
+      flex-shrink: 0;
+    }
+
+    .diff-viewer-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .diff-nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .diff-nav-btn:hover:not(:disabled) {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .diff-nav-btn:active:not(:disabled) {
+      background: var(--bg-active);
+      transform: translateY(1px);
+    }
+
+    .diff-nav-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .diff-nav-btn .material-icons {
+      font-size: 22px;
+    }
+
+    .diff-viewer-container {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+    }
+
     /* Gitea Specific Styles */
     .gitea-toolbar-group .material-icons {
       color: #fa8e14;
