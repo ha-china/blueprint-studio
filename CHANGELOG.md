@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Visual Diff Viewer can now jump between changes** — File diffs now include previous/next navigation buttons and a current-change counter, making it easier to move through large files such as `automations.yaml` and `scripts.yaml`. The active diff block is highlighted as you navigate.
+
 - **Cross-device settings no longer get overwritten by stale browser cache** — Settings loading no longer lets any browser’s `localStorage` override the server copy just because its `_savedAt` timestamp is newer. Local recovery is now limited to a short same-device window using a per-browser `_clientId`, and the resolved settings are written back to local storage after load so old caches stop reviving outdated state from another device.
 
 - **Optional `.editorconfig` reads no longer spam 404 errors in the browser console** — The frontend now requests `.editorconfig` files with an `optional=true` flag, and the backend returns a normal JSON response when the file is missing instead of an HTTP 404. This keeps the console clean when opening files in directories that do not define an `.editorconfig`.
