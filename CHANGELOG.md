@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Autocomplete filter no longer drops the start of the word** — Typing `ac` was filtering against just `c` because CodeMirror's tokenizer returned a sub-token start. The hint function now computes the word start by walking backward across identifier characters.
+
+- **YAML autocomplete schema expanded** — `trigger:`, `triggers:`, `condition:`, `conditions:`, `action:`, `actions:`, `service:`, `variables:`, and `trace:` now appear at the root of flat-style automations. Flat automations are recognised by a sibling-key heuristic. Trigger and condition blocks now suggest their body keys (`entity_id:`, `id:`, `for:`, `to:`, `from:`, `above:`, `below:`, `attribute:`, etc.). `choose:` branch keys (`conditions:`, `default:`) and step modifiers (`continue_on_error:`, `enabled:`, `response_variable:`) added to action keys. Added `trigger: device`/`or`/`and`, `condition: weekday`, and the missing `climate.turn_on`/`turn_off`/`set_fan_mode`/`set_preset_mode`/`set_swing_mode` services.
+
+- **Service-data field completion** — Inside a `data:` block under `action: domain.service`, autocomplete now suggests the service's actual fields (e.g. `brightness:`, `transition:` under `light.turn_on`) from the live HA service registry, with required-field flags and descriptions.
+
+- **Value completion after `key: `** — Typing a value after a known key now suggests valid options: `mode:` → `single`/`restart`/`queued`/`parallel`, `state:` → `on`/`off`/`home`/..., `hvac_mode:` → `heat`/`cool`/`auto`/..., plus `fan_mode:`, `preset_mode:`, `weekday:`, `device_class:`, and others. Service fields with selector options feed dynamic enums.
+
+- **Autocomplete filter accuracy** — Replaced the substring filter with prefix-first matching, so typing `i` no longer matches every key containing `i`. Added deduplication so merged arrays don't show the same key twice. Snippets now require the literal `snip:` prefix instead of triggering on a single `s`. The `!`-tag branch returns early instead of being overwritten by schema completion. Removed `:` from `closeCharacters` so the popup persists across `key:` → `key: value`.
+
 ## [2.4.8] - 2026-04-29
 
 - **Visual Diff Viewer can now jump between changes** — File diffs now include previous/next navigation buttons and a current-change counter, making it easier to move through large files such as `automations.yaml` and `scripts.yaml`. The active diff block is highlighted as you navigate.
