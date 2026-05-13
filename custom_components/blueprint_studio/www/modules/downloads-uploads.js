@@ -245,6 +245,17 @@ async function promptFolderConflict(folderName) {
     });
 }
 
+function buildUploadedFolderPath(basePath, folderName) {
+  const cleanFolderName = folderName.replace(/^\/+|\/+$/g, "");
+  const rawBasePath = basePath || "";
+
+  if (!rawBasePath) return cleanFolderName;
+  if (rawBasePath === "/") return `/${cleanFolderName}`;
+
+  const cleanBasePath = rawBasePath.replace(/\/+$/g, "");
+  return `${cleanBasePath}/${cleanFolderName}`;
+}
+
 /**
  * Processes file uploads
  */
@@ -292,7 +303,7 @@ export async function processUploads(files, targetFolder = null) {
           const base64Data = await readFileAsBase64(file);
           const targetDir = isSftp ? remoteBaseDir : basePath;
           const folderName = file.name.replace(/\.zip$/i, '');
-          const targetPath = targetDir === '/' ? `/${folderName}` : `${targetDir}/${folderName}`;
+          const targetPath = buildUploadedFolderPath(targetDir, folderName);
 
           if (isSftp) {
             // Try without overwrite first
@@ -523,7 +534,7 @@ export async function handleFolderUpload(event) {
       // SFTP folder upload
       const { connId, remotePath } = parseSftpPath(targetPath);
       const folderName = file.name.replace(/\.zip$/i, '');
-      const remoteFolderPath = remotePath === '/' ? `/${folderName}` : `${remotePath}/${folderName}`;
+      const remoteFolderPath = buildUploadedFolderPath(remotePath, folderName);
 
       let result = await uploadSftpFolder(connId, remoteFolderPath, base64Data, "merge", false);
 
@@ -547,11 +558,40 @@ export async function handleFolderUpload(event) {
       }
     } else {
       // Local folder upload
-      const data = await fetchWithAuth(API_BASE, {
+      const folderName = file.name.replace(/\.zip$/i, '');
+      const localFolderPath = buildUploadedFolderPath(targetPath, folderName);
+      let data = await fetchWithAuth(API_BASE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "upload_folder", path: targetPath, zip_data: base64Data }),
+        body: JSON.stringify({
+          action: "upload_folder",
+          path: localFolderPath,
+          zip_data: base64Data,
+          mode: "merge",
+          overwrite: false
+        }),
       });
+
+      if (data && data.status === 409) {
+        const mode = await promptFolderConflict(data.folder_name || folderName);
+        if (mode) {
+          data = await fetchWithAuth(API_BASE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "upload_folder",
+              path: localFolderPath,
+              zip_data: base64Data,
+              mode,
+              overwrite: true
+            }),
+          });
+        } else {
+          hideGlobalLoading();
+          event.target.value = "";
+          return;
+        }
+      }
 
       hideGlobalLoading();
       if (data.success) {

@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import fnmatch
+import hashlib
 import io
 import logging
 import os
@@ -145,12 +146,62 @@ class FileManager:
                 "FileManager: folder_watcher event received (%s), invalidating cache",
                 event.data.get("event_type", "unknown"),
             )
-            with self._cache_lock:
-                self._file_cache = {}
-                self._last_cache_update = 0
+            self._fire_update("external_change", event.data.get("path"))
 
         self.hass.bus.async_listen("folder_watcher", _on_folder_watcher)
         _LOGGER.debug("FileManager: subscribed to folder_watcher events for cache invalidation")
+
+    def get_tree_snapshot(self, show_hidden: bool = False) -> dict:
+        """Return a lightweight signature for visible file-tree contents."""
+        root_dir = self._get_root_dir()
+        digest = hashlib.blake2b(digest_size=16)
+        count = 0
+        latest_mtime = 0
+
+        for root, dirs, files in os.walk(root_dir):
+            if not show_hidden:
+                dirs[:] = [d for d in dirs if d not in EXCLUDED_PATTERNS and not d.startswith(".")]
+            else:
+                dirs[:] = [d for d in dirs if d not in EXCLUDED_PATTERNS]
+
+            rel_root = Path(root).relative_to(root_dir)
+
+            for name in sorted(dirs):
+                item_path = Path(root) / name
+                rel_path = str(rel_root / name if str(rel_root) != "." else name)
+                try:
+                    stat_result = item_path.stat()
+                except OSError:
+                    continue
+                digest.update(f"d:{rel_path}:{stat_result.st_mtime_ns}".encode("utf-8", "surrogateescape"))
+                count += 1
+                latest_mtime = max(latest_mtime, stat_result.st_mtime_ns)
+
+            for name in sorted(files):
+                if (not show_hidden and name.startswith(".")):
+                    continue
+                item_path = Path(root) / name
+                if not self._is_listed_file(item_path):
+                    continue
+                rel_path = str(rel_root / name if str(rel_root) != "." else name)
+                try:
+                    stat_result = item_path.stat()
+                except OSError:
+                    continue
+                digest.update(
+                    f"f:{rel_path}:{stat_result.st_mtime_ns}:{stat_result.st_size}".encode(
+                        "utf-8", "surrogateescape"
+                    )
+                )
+                count += 1
+                latest_mtime = max(latest_mtime, stat_result.st_mtime_ns)
+
+        return {
+            "success": True,
+            "signature": digest.hexdigest(),
+            "count": count,
+            "latest_mtime": latest_mtime,
+        }
 
     def list_files(self, show_hidden: bool = False) -> list[dict]:
         """List files recursively."""
