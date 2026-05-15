@@ -78,6 +78,13 @@ async def get_file_stat(file_manager, params):
     return await file_manager.get_file_stat(path)
 
 
+async def get_tree_snapshot(file_manager, params, hass):
+    """Get a lightweight signature for the visible file tree."""
+    show_hidden = params.get("show_hidden", "false").lower() == "true"
+    snapshot = await hass.async_add_executor_job(file_manager.get_tree_snapshot, show_hidden)
+    return json_response(snapshot)
+
+
 async def download_folder(file_manager, params, request):
     """Download a folder as zip."""
     path = params.get("path")

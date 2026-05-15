@@ -7,7 +7,10 @@ import { eventBus } from './event-bus.js';
 
 // Polling interval reference
 export let gitStatusPollingInterval = null;
+let fileTreeSnapshotPollingInterval = null;
 let pollCount = 0; // Track poll cycles for fetch timing
+let lastFileTreeSnapshot = null;
+let fileTreeSnapshotInFlight = false;
 
 /**
  * Checks if the active file has been modified externally
@@ -45,6 +48,42 @@ export async function checkFileUpdates() {
   }
 }
 
+function isTerminalActive() {
+  return state.terminalVisible || state.openTabs.some(tab => tab && tab.isTerminal);
+}
+
+/**
+ * Checks whether terminal commands changed local file-tree contents.
+ */
+export async function checkFileTreeSnapshot() {
+  if (document.visibilityState !== 'visible' || !document.hasFocus()) return;
+  if (!isTerminalActive() || fileTreeSnapshotInFlight) return;
+
+  fileTreeSnapshotInFlight = true;
+  try {
+    const response = await fetchWithAuth(
+      `${API_BASE}?action=get_tree_snapshot&show_hidden=${state.showHidden}&_t=${Date.now()}`
+    );
+    if (!response.success || !response.signature) return;
+
+    const signature = `${state.showHidden}:${response.signature}`;
+    if (lastFileTreeSnapshot === null) {
+      lastFileTreeSnapshot = signature;
+      eventBus.emit('ui:reload-files', { force: true });
+      return;
+    }
+
+    if (lastFileTreeSnapshot !== signature) {
+      lastFileTreeSnapshot = signature;
+      eventBus.emit('ui:reload-files', { force: true });
+    }
+  } catch (e) {
+    // Silent fail; this is only a terminal-change fallback.
+  } finally {
+    fileTreeSnapshotInFlight = false;
+  }
+}
+
 /**
  * Starts polling for git status and file updates
  * Polls every 10 seconds when window is focused (optimized)
@@ -79,6 +118,14 @@ export function startGitStatusPolling() {
       // Silently fail
     }
   }, 10000); // 10 seconds (optimized from 5s)
+
+  if (fileTreeSnapshotPollingInterval) {
+    clearInterval(fileTreeSnapshotPollingInterval);
+  }
+  lastFileTreeSnapshot = null;
+  fileTreeSnapshotPollingInterval = setInterval(() => {
+    checkFileTreeSnapshot();
+  }, 2500);
 }
 
 /**
@@ -88,6 +135,10 @@ export function stopGitStatusPolling() {
   if (gitStatusPollingInterval) {
     clearInterval(gitStatusPollingInterval);
     gitStatusPollingInterval = null;
+  }
+  if (fileTreeSnapshotPollingInterval) {
+    clearInterval(fileTreeSnapshotPollingInterval);
+    fileTreeSnapshotPollingInterval = null;
   }
 }
 

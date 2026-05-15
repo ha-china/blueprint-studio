@@ -109,6 +109,7 @@ class BlueprintStudioApiView(HomeAssistantView):
             "read_file": lambda r, u, p, h: api_files.read_file(self.file, p),
             "global_search": lambda r, u, p, h: api_files.global_search(self.file, p, h),
             "get_file_stat": lambda r, u, p, h: api_files.get_file_stat(self.file, p),
+            "get_tree_snapshot": lambda r, u, p, h: api_files.get_tree_snapshot(self.file, p, h),
             "get_settings": lambda r, u, p, h: json_response(self.data.get("settings", {})),
             "get_version": lambda r, u, p, h: api_misc.get_version(h),
             "get_devices": lambda r, u, p, h: api_misc.get_devices(h),

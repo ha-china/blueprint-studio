@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Folder ZIP uploads no longer falsely report that the destination already exists** — Local "Upload Folder (ZIP)" now matches SFTP behaviour by extracting into `target-folder/zip-name` instead of checking the current target folder itself. Local uploads also now show the same merge/replace conflict flow when the zip-named folder really does already exist.
+
+- **Terminal-created files appear in the file tree without a page reload** — External filesystem changes now trigger frontend refreshes when Home Assistant `folder_watcher` events are available. The integrated terminal also runs a lightweight file-tree snapshot check while open, so files created by commands such as `python -m tinytuya wizard` are picked up automatically.
+
 - **Autocomplete filter no longer drops the start of the word** — Typing `ac` was filtering against just `c` because CodeMirror's tokenizer returned a sub-token start. The hint function now computes the word start by walking backward across identifier characters.
 
 - **YAML autocomplete schema expanded** — `trigger:`, `triggers:`, `condition:`, `conditions:`, `action:`, `actions:`, `service:`, `variables:`, and `trace:` now appear at the root of flat-style automations. Flat automations are recognised by a sibling-key heuristic. Trigger and condition blocks now suggest their body keys (`entity_id:`, `id:`, `for:`, `to:`, `from:`, `above:`, `below:`, `attribute:`, etc.). `choose:` branch keys (`conditions:`, `default:`) and step modifiers (`continue_on_error:`, `enabled:`, `response_variable:`) added to action keys. Added `trigger: device`/`or`/`and`, `condition: weekday`, and the missing `climate.turn_on`/`turn_off`/`set_fan_mode`/`set_preset_mode`/`set_swing_mode` services.
