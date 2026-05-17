@@ -166,6 +166,83 @@ export async function getAuthToken() {
 let _wsConn = null;
 let _wsUnsubscribe = null;
 
+function _parentPath(path) {
+  if (!path) return "";
+  const clean = path.endsWith("/") ? path.slice(0, -1) : path;
+  const index = clean.lastIndexOf("/");
+  return index > 0 ? clean.slice(0, index) : "";
+}
+
+function _looksLikeFile(path) {
+  const name = (path || "").split("/").pop() || "";
+  return name.includes(".");
+}
+
+function _closeDeletedTabs(path, isFolder) {
+  const matches = (tab) => tab.path === path || (isFolder && tab.path.startsWith(path + "/"));
+  const activeDeleted = state.activeTab && matches(state.activeTab);
+  state.openTabs = state.openTabs.filter(tab => !matches(tab));
+
+  if (activeDeleted) {
+    state.activeTab = state.openTabs[0] || null;
+    if (state.activeTab && state.editor && !state.activeTab.isBinary) {
+      state.editor.setValue(state.activeTab.content || "");
+    } else if (state.editor) {
+      state.editor.setValue("");
+    }
+  }
+}
+
+async function _syncOpenTabMtime(path) {
+  const tab = state.openTabs.find(item => item.path === path);
+  if (!tab || path.includes("://")) return;
+  try {
+    const response = await fetchWithAuth(`${API_BASE}?action=get_file_stat&path=${encodeURIComponent(path)}&_t=${Date.now()}`);
+    if (response?.success && response.mtime) {
+      tab.mtime = response.mtime;
+    }
+  } catch (_) {}
+}
+
+async function _refreshPath(path, action) {
+  if (!path) return;
+  const isFile = _looksLikeFile(path);
+  const parent = isFile ? _parentPath(path) : path;
+  const { loadDirectory, renderFileTree } = await import('./file-tree.js');
+
+  state.loadedDirectories.delete(parent);
+  if (action === "delete" || action === "rename" || action === "create_folder" || action === "delete_folder") {
+    state.loadedDirectories.delete(path);
+    state.expandedFolders.delete(path);
+  }
+  if (action === "delete" || action === "delete_folder") {
+    _closeDeletedTabs(path, !isFile);
+    if (!isFile && state.currentNavigationPath.startsWith(path)) {
+      state.currentNavigationPath = _parentPath(path);
+      state.navigationHistory = state.navigationHistory.filter(item => !item.startsWith(path));
+    }
+  } else if (isFile) {
+    await _syncOpenTabMtime(path);
+  }
+
+  const reloadPath = action === "delete_folder" || action === "create_folder" || (!isFile && action !== "navigate")
+    ? _parentPath(path)
+    : parent;
+
+  state.loadedDirectories.delete(reloadPath);
+
+  if (state.currentNavigationPath === reloadPath || state.currentNavigationPath === path || state.expandedFolders.has(reloadPath)) {
+    await loadDirectory(reloadPath);
+  } else {
+    renderFileTree();
+  }
+
+  eventBus.emit('ui:refresh-tree');
+  eventBus.emit('ui:refresh-tabs');
+  eventBus.emit('ui:refresh-recent-files');
+  eventBus.emit('git:status-check', { fetch: false, silent: true });
+}
+
 async function _subscribeToUpdates(conn, retries = 0) {
   // Clean up any previous subscription before re-subscribing
   if (_wsUnsubscribe) {
@@ -175,11 +252,37 @@ async function _subscribeToUpdates(conn, retries = 0) {
 
   try {
     _wsUnsubscribe = await conn.subscribeMessage(
-      (event) => {
+      async (event) => {
+        console.log('[BPS-ws] message received:', event?.action, event?.path);
+        if (event && event.action === "ai_edit") {
+          try {
+            const { showAiDiffModal } = await import('./git-diff.js');
+            await showAiDiffModal(event.path, event.old_content || "", event.new_content || "");
+            await _refreshPath(event.path, event.action);
+          } catch (e) {
+            console.error('[BPS-ws] ai_edit error:', e);
+          }
+          return;
+        }
+        if (event && event.action === "navigate" && event.path) {
+          try {
+            const { revealAndOpenFile } = await import('./file-nav-helper.js');
+            await revealAndOpenFile(event.path, 'tool');
+            await _refreshPath(event.path, event.action);
+          } catch (e) {
+            console.error('[BPS-ws] navigate error:', e);
+          }
+          return;
+        }
         if (state._wsUpdateTimer) clearTimeout(state._wsUpdateTimer);
         state._wsUpdateTimer = setTimeout(() => {
+          if (event?.path) {
+            _refreshPath(event.path, event.action).catch((e) => console.warn('[BPS-ws] refresh error:', e));
+            return;
+          }
           eventBus.emit('file:check-updates');
           eventBus.emit('git:status-check', { fetch: false, silent: true });
+        }, 80);
 
           if (event && ["create", "delete", "rename", "create_folder", "upload", "upload_folder", "external_change"].includes(event.action)) {
             eventBus.emit('ui:reload-files', { force: event.action === "external_change" });

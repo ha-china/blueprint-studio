@@ -34,61 +34,12 @@ export async function loadServices() {
 /**
  * Home Assistant Autocomplete Function for CodeMirror
  */
-/**
- * Find the parent service call (action: domain.service) the cursor is currently inside.
- * Walks backward from the cursor line, looking for an "action:" or "service:" line whose
- * indent is shallower than the cursor's. Returns the matching service object from HA_SERVICES,
- * or null if not inside one.
- */
-function findEnclosingService(editor, cursorLine, cursorIndent) {
-  if (!HA_SERVICES.length) return null;
-  for (let i = cursorLine - 1; i >= 0 && i >= cursorLine - 50; i--) {
-    const line = editor.getLine(i);
-    if (!line || !line.trim()) continue;
-    const indent = (line.match(/^(\s*)/) || ['', ''])[1].length;
-    if (indent >= cursorIndent) continue;
-    const m = line.match(/^\s*-?\s*(?:action|service)\s*:\s*([a-z0-9_]+\.[a-z0-9_]+)\s*$/);
-    if (m) {
-      return HA_SERVICES.find(s => s.service === m[1]) || null;
-    }
-    if (indent === 0) return null;
-  }
-  return null;
-}
-
-/**
- * Returns the enum value list for the given key name, sourced from HA_SCHEMA.valueEnums
- * or from a service field's selector when applicable.
- */
-function getValueEnumsForKey(keyName, enclosingService) {
-  if (enclosingService && enclosingService.fields && enclosingService.fields[keyName]) {
-    const field = enclosingService.fields[keyName];
-    const sel = field.selector || {};
-    if (sel.select && Array.isArray(sel.select.options)) {
-      return sel.select.options.map(opt => {
-        if (typeof opt === 'string') return { text: opt };
-        return { text: opt.value || opt.label || '', description: opt.label || '' };
-      }).filter(o => o.text);
-    }
-    if (sel.boolean) {
-      return [{ text: 'true' }, { text: 'false' }];
-    }
-  }
-  return (HA_SCHEMA.valueEnums && HA_SCHEMA.valueEnums[keyName]) || null;
-}
-
 export function homeAssistantHint(editor, options) {
   const cursor = editor.getCursor();
   const currentLine = editor.getLine(cursor.line);
-  // Compute word boundaries by scanning backward from the cursor for identifier
-  // characters. CodeMirror's getTokenAt sometimes returns sub-tokens mid-word
-  // (especially in the ha-yaml mode), which would give the wrong `start` and
-  // cause the filter to compare against just the last few characters typed.
+  const token = editor.getTokenAt(cursor);
+  const start = token.start;
   const end = cursor.ch;
-  let start = end;
-  while (start > 0 && /[a-zA-Z0-9_!]/.test(currentLine.charAt(start - 1))) {
-    start--;
-  }
   const currentWord = currentLine.slice(start, end);
 
   // Determine context from previous lines and indentation
@@ -136,50 +87,6 @@ export function homeAssistantHint(editor, options) {
     }
   }
 
-  // Value enum completion — when cursor is to the right of "key: " on the same line.
-  // Suggests enum values from HA_SCHEMA.valueEnums or from an enclosing service's field selector.
-  // Skip action:/service: lines (handled separately) and trigger:/condition:/platform: lines
-  // (which take type values like "state", "numeric_state" — handled by the trigger/condition lists).
-  const valueMatch = !isServiceLine && lineText.match(/^(\s*-?\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s+([a-zA-Z0-9_]*)$/);
-  if (valueMatch) {
-    const keyName = valueMatch[2];
-    const valuePrefix = valueMatch[3];
-    const valueStart = cursor.ch - valuePrefix.length;
-    // Skip keys whose values are themselves a type-discriminator handled elsewhere
-    const skipKeys = new Set(['trigger', 'condition', 'platform', 'action', 'service']);
-    if (!skipKeys.has(keyName)) {
-      const lineIndent = (currentLine.match(/^(\s*)/) || ['', ''])[1].length;
-      const enclosingService = findEnclosingService(editor, cursor.line, lineIndent);
-      const enums = getValueEnumsForKey(keyName, enclosingService);
-      if (enums && enums.length > 0) {
-        const filtered = enums.filter(v => v.text.toLowerCase().startsWith(valuePrefix.toLowerCase()));
-        if (filtered.length > 0) {
-          return {
-            list: filtered.map(v => ({
-              text: v.text,
-              displayText: v.text,
-              className: 'ha-hint-value',
-              render: (elem) => {
-                elem.innerHTML = `
-                  <div style="display: flex; align-items: center; width: 100%;">
-                    <span class="material-icons" style="font-size: 14px; margin-right: 6px; color: var(--success-color); flex-shrink: 0;">data_object</span>
-                    <span>${v.text}</span>
-                    ${v.description ? `<span class="ha-hint-description" style="margin-left: auto; font-size: 0.75em; opacity: 0.65; padding-left: 8px;">${v.description}</span>` : ''}
-                  </div>
-                `;
-              },
-              hint: (cm) => {
-                cm.replaceRange(v.text, { line: cursor.line, ch: valueStart }, { line: cursor.line, ch: end });
-              }
-            })),
-            from: CodeMirror.Pos(cursor.line, valueStart),
-            to: CodeMirror.Pos(cursor.line, end)
-          };
-        }
-      }
-    }
-  }
-
   // Service autocompletion — triggered when the line is an action:/service: key
   if (isServiceLine && HA_SERVICES.length > 0) {
     // The typed word starts after the colon
@@ -217,50 +124,6 @@ export function homeAssistantHint(editor, options) {
   const trimmedLine = currentLine.trimStart();
   const isLineStart = currentLine.substring(0, cursor.ch).trim() === currentWord.trim();
 
-  // Service-data field completion — when cursor is inside a `data:` block under an
-  // `action: domain.service` call, suggest the service's field names (brightness:, transition:, etc.)
-  // Only fires when the user is typing a key (not a value), at line start.
-  if (isLineStart && !lineText.includes(':')) {
-    const lineIndent = (currentLine.match(/^(\s*)/) || ['', ''])[1].length;
-    const enclosingService = findEnclosingService(editor, cursor.line, lineIndent);
-    if (enclosingService && enclosingService.fields && Object.keys(enclosingService.fields).length > 0) {
-      const fieldEntries = Object.entries(enclosingService.fields);
-      const filtered = fieldEntries.filter(([fieldName]) =>
-        fieldName.toLowerCase().startsWith(currentWord.toLowerCase())
-      );
-      if (filtered.length > 0) {
-        return {
-          list: filtered.map(([fieldName, meta]) => {
-            const required = meta.required ? ' (required)' : '';
-            const description = meta.description || '';
-            const example = meta.example !== undefined && meta.example !== null
-              ? `e.g. ${typeof meta.example === 'object' ? JSON.stringify(meta.example) : meta.example}`
-              : '';
-            return {
-              text: `${fieldName}:`,
-              displayText: fieldName,
-              className: 'ha-hint-field',
-              render: (elem) => {
-                elem.innerHTML = `
-                  <div style="display: flex; align-items: center; width: 100%;">
-                    <span class="material-icons" style="font-size: 14px; margin-right: 6px; color: var(--accent-color); flex-shrink: 0;">tune</span>
-                    <span>${fieldName}${required}</span>
-                    ${description ? `<span class="ha-hint-description" style="margin-left: auto; font-size: 0.75em; opacity: 0.65; padding-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;" title="${description.replace(/"/g, '&quot;')}">${example || description}</span>` : ''}
-                  </div>
-                `;
-              },
-              hint: (cm) => {
-                cm.replaceRange(`${fieldName}: `, { line: cursor.line, ch: start }, { line: cursor.line, ch: end });
-              }
-            };
-          }),
-          from: CodeMirror.Pos(cursor.line, start),
-          to: CodeMirror.Pos(cursor.line, end)
-        };
-      }
-    }
-  }
-
   if (currentWord.startsWith('!') || (isLineStart && currentWord === '!')) {
     // Dynamic !input completion for blueprint files
     const fullContent = editor.getValue();
@@ -297,36 +160,28 @@ export function homeAssistantHint(editor, options) {
       }
     }
 
-    suggestions = HA_SCHEMA.yamlTags
-      .filter(item => item.text.toLowerCase().startsWith(currentWord.toLowerCase()))
-      .map(item => ({
-        text: item.text,
-        displayText: item.text,
-        className: 'ha-hint-tag',
-        render: (elem, self, data) => {
-          elem.innerHTML = `
-            <span>${data.text}</span>
-            <span class="ha-hint-type">${data.type}</span>
-          `;
-        },
-        hint: (cm, self, data) => {
-          cm.replaceRange(data.text, { line: cursor.line, ch: start }, { line: cursor.line, ch: end });
-        },
-        ...item
-      }));
-    // Return early — !-tags should NOT fall through to schema completion
-    return {
-      list: suggestions.slice(0, 20),
-      from: CodeMirror.Pos(cursor.line, start),
-      to: CodeMirror.Pos(cursor.line, end)
-    };
+    suggestions = HA_SCHEMA.yamlTags.map(item => ({
+      text: item.text,
+      displayText: item.text,
+      className: 'ha-hint-tag',
+      render: (elem, self, data) => {
+        elem.innerHTML = `
+          <span>${data.text}</span>
+          <span class="ha-hint-type">${data.type}</span>
+        `;
+      },
+      hint: (cm, self, data) => {
+        cm.replaceRange(data.text, { line: cursor.line, ch: start }, { line: cursor.line, ch: end });
+      },
+      ...item
+    }));
   }
 
-  const snipMatch = lineText.match(/(snip:[a-z0-9_-]*)$/i);
+  const snipMatch = lineText.match(/(snip:[a-z0-9_]*|sni?p?:?)$/i);
   if (snipMatch) {
     const snipQuery = snipMatch[0].toLowerCase();
     const snipStart = cursor.ch - snipQuery.length;
-    const snipMatches = HA_SCHEMA.snippets.filter(s => s.text.toLowerCase().startsWith(snipQuery));
+    const snipMatches = HA_SCHEMA.snippets.filter(s => s.text.startsWith(snipQuery) || snipQuery.startsWith(s.text.split(':')[0]));
     
     if (snipMatches.length > 0) {
         suggestions = snipMatches.map(item => ({
@@ -358,18 +213,14 @@ export function homeAssistantHint(editor, options) {
   }
 
   if (suggestions.length === 0 && context.indent === 0 && isLineStart) {
-    suggestions = [
-      ...HA_SCHEMA.configuration,
-      ...HA_SCHEMA.automation,
-      ...HA_SCHEMA.commonKeys,
-    ].map(item => ({
+    suggestions = HA_SCHEMA.configuration.map(item => ({
       text: item.text,
       displayText: item.text,
-      className: `ha-hint-${item.type}`,
+      className: 'ha-hint-domain',
       render: (elem, self, data) => {
         elem.innerHTML = `
           <span>${data.text}</span>
-          <span class="ha-hint-description">${data.description || ''}</span>
+          <span class="ha-hint-description">${data.description}</span>
         `;
       },
       hint: (cm, self, data) => {
@@ -420,7 +271,6 @@ export function homeAssistantHint(editor, options) {
       suggestions = [
         ...HA_SCHEMA.services,
         ...HA_SCHEMA.actionKeys,
-        ...HA_SCHEMA.repeatKeys,
       ];
     } else {
       suggestions = HA_SCHEMA.automation;
@@ -487,41 +337,20 @@ export function homeAssistantHint(editor, options) {
     }));
   }
 
-  // Deduplicate by `text` — when arrays are merged (e.g. configuration + automation),
-  // the same key can appear twice and would show up twice in the dropdown.
-  const seen = new Set();
-  suggestions = suggestions.filter(item => {
-    if (seen.has(item.text)) return false;
-    seen.add(item.text);
-    return true;
-  });
-
-  // Two-tier filter: prefix matches first; substring matches only as fallback when
-  // there are no prefix hits. This keeps the dropdown relevant — typing "i" should
-  // not match every key containing the letter "i".
-  const lcWord = currentWord.toLowerCase();
-  if (lcWord) {
-    const prefixHits = suggestions.filter(item => item.text.toLowerCase().startsWith(lcWord));
-    if (prefixHits.length > 0) {
-      suggestions = prefixHits;
-    } else {
-      // Word-boundary substring fallback: match where the word appears after a
-      // non-letter (e.g. "trigger" matches "- trigger:"), but not arbitrary mid-word.
-      const re = new RegExp(`(?:^|[^a-z])${lcWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
-      suggestions = suggestions.filter(item => re.test(item.text));
-    }
-  }
+  suggestions = suggestions.filter(item =>
+    item.text.toLowerCase().includes(currentWord.toLowerCase())
+  );
 
   suggestions.sort((a, b) => {
-    const aStarts = a.text.toLowerCase().startsWith(lcWord);
-    const bStarts = b.text.toLowerCase().startsWith(lcWord);
+    const aStarts = a.text.toLowerCase().startsWith(currentWord.toLowerCase());
+    const bStarts = b.text.toLowerCase().startsWith(currentWord.toLowerCase());
     if (aStarts && !bStarts) return -1;
     if (!aStarts && bStarts) return 1;
     return a.text.localeCompare(b.text);
   });
 
   return {
-    list: suggestions.slice(0, 30),
+    list: suggestions.slice(0, 20),
     from: { line: cursor.line, ch: start },
     to: { line: cursor.line, ch: end }
   };
@@ -569,11 +398,11 @@ export function getYamlContext(editor, lineNumber) {
         context.section = 'script';
       }
 
-      if (line.includes('trigger:') || line.includes('triggers:')) {
+      if (line.includes('trigger:')) {
         context.inTrigger = true;
-      } else if (line.includes('condition:') || line.includes('conditions:')) {
+      } else if (line.includes('condition:')) {
         context.inCondition = true;
-      } else if (line.includes('action:') || line.includes('actions:')) {
+      } else if (line.includes('action:')) {
         context.inAction = true;
       } else if (line.includes('platform:')) {
         context.inPlatform = true;
@@ -582,22 +411,6 @@ export function getYamlContext(editor, lineNumber) {
       }
 
       if (lineIndent === 0 && context.indent > 0) {
-        break;
-      }
-    }
-  }
-
-  // Flat automation heuristic: if section is still unknown but sibling lines in the
-  // same block contain automation-specific keys, treat this as an automation context.
-  if (context.section === null && context.indent <= 2) {
-    const totalLines = editor.lineCount();
-    const scanStart = Math.max(0, lineNumber - 30);
-    const scanEnd = Math.min(totalLines - 1, lineNumber + 10);
-    for (let i = scanStart; i <= scanEnd; i++) {
-      const line = editor.getLine(i);
-      if (!line) continue;
-      if (/^\s*(alias|trigger|triggers|condition|conditions|action|actions|mode)\s*:/.test(line)) {
-        context.section = 'automation';
         break;
       }
     }

@@ -14,9 +14,6 @@
       outline: none;
     }
 
-    /* Loading States */
-      border-color: var(--accent-color);
-    }
 
     .search-input::placeholder {
       color: var(--text-muted);
@@ -70,6 +67,8 @@
       padding: 4px 0;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
+      contain: layout style;
+      min-height: 0;
     }
 
     /* Favorites panel */
@@ -164,6 +163,15 @@
       color: white;
     }
 
+    @keyframes ai-pulse {
+      0%   { box-shadow: inset 0 0 0 2px var(--accent-color); }
+      50%  { box-shadow: inset 0 0 8px 2px var(--accent-color); }
+      100% { box-shadow: none; }
+    }
+    .tree-item.ai-highlight {
+      animation: ai-pulse 2s ease-out;
+    }
+
     .tree-item.drag-over {
       background: var(--accent-color-transparent, rgba(33, 150, 243, 0.2)) !important;
       border: 1px dashed var(--accent-color);
@@ -202,29 +210,13 @@
       display: none;
     }
 
-    /* Lazy Loading - Loading spinner in tree */
+    /* Lazy Loading - hidden, data is prefetched */
     .tree-chevron .loading-spinner {
-      animation: spin 1s linear infinite;
-      font-size: 16px;
-      color: var(--accent-color);
+      display: none;
     }
 
-    /* Lazy Loading - Loading placeholder item */
     .loading-item {
-      display: flex;
-      align-items: center;
-      padding: 8px 8px;
-      font-size: 14px;
-      color: var(--text-secondary);
-      min-height: 40px;
-      pointer-events: none;
-    }
-
-    .loading-item .loading-spinner {
-      animation: spin 1s linear infinite;
-      font-size: 16px;
-      margin-right: 8px;
-      color: var(--accent-color);
+      display: none;
     }
 
     /* Folder Navigation Bar */
@@ -364,16 +356,20 @@
     .tree-chevron {
       width: 20px;
       height: 20px;
+      min-width: 20px;
+      min-height: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-right: 4px;
       flex-shrink: 0;
       transition: transform 0.15s;
+      overflow: hidden;
     }
 
     .tree-chevron .material-icons {
       font-size: 18px;
+      line-height: 1;
       color: var(--text-secondary);
     }
 
@@ -392,9 +388,8 @@
       flex: 1;
     }
 
-    /* File Tree Loading State */
+    /* File Tree Loading State — minimal, no visual disruption */
     .file-tree.loading {
-      opacity: 0.5;
       pointer-events: none;
     }
 

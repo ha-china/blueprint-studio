@@ -1207,12 +1207,13 @@ export async function toggleFolder(path) {
           cachedDirectory.folders || [],
           cachedDirectory.files || []
         );
+        renderFileTree();
       } else {
         await loadDirectory(path);
       }
+    } else {
+      renderFileTree();
     }
-
-    renderFileTree();
   }
 }
 
@@ -1257,6 +1258,25 @@ export async function loadDirectory(path) {
 
     // Update file tree structure (add loaded items)
     updateFileTreeWithLoadedDirectory(path, result.folders || [], result.files || []);
+
+    // Prefetch child folders in background so expand is instant
+    const childFolders = result.folders || [];
+    for (const folder of childFolders) {
+      const childPath = path ? `${path}/${folder.name}` : folder.name;
+      if (!state.loadedDirectories.has(childPath) && !state.loadingDirectories.has(childPath)) {
+        fetchWithAuth(
+          `${API_BASE}?action=list_directory&path=${encodeURIComponent(childPath)}&show_hidden=${state.showHidden}`
+        ).then(childResult => {
+          if (childResult && !childResult.error) {
+            state.loadedDirectories.set(childPath, {
+              folders: childResult.folders || [],
+              files: childResult.files || []
+            });
+            updateFileTreeWithLoadedDirectory(childPath, childResult.folders || [], childResult.files || []);
+          }
+        }).catch(() => {});
+      }
+    }
 
   } catch (error) {
     console.error(`Error loading directory ${path}:`, error);

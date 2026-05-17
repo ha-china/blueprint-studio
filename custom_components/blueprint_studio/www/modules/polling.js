@@ -36,11 +36,10 @@ export async function checkFileUpdates() {
 
       // If we have a stored mtime and the new one is different
       if (state.activeTab.mtime !== response.mtime) {
-        // If user hasn't modified, auto-reload
         if (!state.activeTab.modified) {
-          showToast(`File updated externally: ${state.activeTab.path.split('/').pop()}`, "info");
-          // We update mtime in openFile(..., true)
-          eventBus.emit('file:open', { path: state.activeTab.path, forceReload: true });
+          const path = state.activeTab.path;
+          await Promise.all(eventBus.emit('file:open', { path, forceReload: true }));
+          showToast(`File updated externally: ${path.split('/').pop()}`, "info");
         }
       }
     }

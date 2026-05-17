@@ -1,4 +1,4 @@
-    /* Welcome screen */
+    /* Welcome Screen */
     .welcome-screen {
       display: flex;
       flex-direction: column;
@@ -7,90 +7,142 @@
       height: 100%;
       color: var(--text-muted);
       text-align: center;
-      padding: 20px;
+      padding: 32px 24px;
+      overflow-y: auto;
     }
 
-    .welcome-screen .material-icons {
-      font-size: 48px;
-      margin-bottom: 16px;
-      opacity: 0.5;
+    .welcome-screen > .material-icons {
+      font-size: 40px;
+      opacity: 0.35;
+      margin-bottom: 8px;
     }
 
     .welcome-screen h2 {
-      font-weight: 400;
-      font-size: 20px;
-      margin-bottom: 8px;
-      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 22px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
     }
 
     .welcome-screen p {
       font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 0;
     }
 
+    /* Action Buttons */
     .welcome-actions {
       display: flex;
       gap: 12px;
-      margin-top: 24px;
-      margin-bottom: 24px;
+      margin: 24px 0;
+      flex-wrap: wrap;
+      justify-content: center;
     }
+
     .welcome-actions .btn-primary,
     .welcome-actions .btn-secondary {
-      padding: 12px 24px;
-      font-size: 15px;
+      padding: 8px 20px;
+      font-size: 14px;
       font-weight: 500;
       border-radius: 8px;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
-      border: none;
+      gap: 6px;
+      border: 1px solid transparent;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      line-height: 1;
+      white-space: nowrap;
     }
+
+    .welcome-actions .btn-primary .material-icons,
+    .welcome-actions .btn-secondary .material-icons {
+      font-size: 16px;
+    }
+
     .welcome-actions .btn-primary {
       background: var(--accent-color);
-      color: white;
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     }
+
     .welcome-actions .btn-primary:hover {
       background: var(--accent-hover);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
     }
+
+    .welcome-actions .btn-primary:active {
+      transform: scale(0.97);
+    }
+
     .welcome-actions .btn-secondary {
-      background: var(--bg-tertiary);
+      background: var(--bg-secondary);
       color: var(--text-primary);
+      border-color: var(--border-color);
     }
+
     .welcome-actions .btn-secondary:hover {
       background: var(--bg-hover);
     }
 
+    .welcome-actions .btn-secondary:active {
+      transform: scale(0.97);
+    }
+
+    /* Keyboard Shortcuts */
     .welcome-shortcuts {
-      margin-top: 24px;
-      text-align: left;
+      margin-top: 8px;
+      max-width: 480px;
     }
 
     .welcome-shortcuts h3 {
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       margin-bottom: 12px;
-      color: var(--text-secondary);
+      color: var(--text-muted);
     }
 
-    .shortcut-item {
+    .welcome-shortcuts .shortcut-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .welcome-shortcuts .shortcut-item {
       display: flex;
       align-items: center;
-      margin-bottom: 8px;
+      flex-direction: row;
+      gap: 12px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: var(--bg-tertiary);
       font-size: 13px;
-      color: var(--text-primary);
+      color: var(--text-secondary);
+      transition: background 0.15s;
     }
 
-    .shortcut-key {
-      background: var(--bg-tertiary);
+    .welcome-shortcuts .shortcut-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .welcome-shortcuts .shortcut-key {
+      display: inline-block;
+      background: var(--bg-primary);
       color: var(--text-primary);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-family: monospace;
-      margin-right: 12px;
-      min-width: 70px;
-      text-align: center;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'SF Mono', Menlo, Monaco, monospace;
       font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      line-height: 1;
+      min-width: 64px;
+      text-align: center;
     }

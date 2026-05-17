@@ -1,20 +1,17 @@
 /** MAIN.JS | Purpose: * Application entry point. Waits for DOM ready, then initializes the app. */
-import * as app from './app.js';
-import { state, elements } from './state.js';
 
-// Cache-bust version for critical modules changed in OAuth rewrite.
-// Bump this when pwa-auth.js, initialization.js, or api.js change.
 const _v = window.__BS_VERSION__ || '0';
 
-// Expose app module globally for console access and debugging
-window.app = app;
-window.state = state;
-window.elements = elements;
-
-// Initialize app with PWA authentication
 async function initApp() {
   try {
-    // Dynamic imports with cache-busting to ensure fresh modules load
+    const [appMod, stateMod] = await Promise.all([
+      import('./app.js?v=' + _v),
+      import('./state.js?v=' + _v),
+    ]);
+    window.app = appMod;
+    window.state = stateMod.state;
+    window.elements = stateMod.elements;
+
     const { pwaAuth } = await import('./pwa-auth.js?v=' + _v);
     window.pwaAuth = pwaAuth;
 

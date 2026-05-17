@@ -642,6 +642,24 @@ Example modern automation:
 
         return json_message(f"Unknown local AI provider: {provider}", status_code=400)
 
+    async def _call_hass_agent(
+        self, query: str, current_file: str | None,
+        file_content: str | None, agent_entity_id: str | None,
+    ) -> web.Response:
+        """Route query through a Home Assistant conversation agent."""
+        try:
+            from .claw_hook import try_claw_query
+            resp = await try_claw_query(
+                self.hass, query, current_file, file_content,
+                agent_entity_id=agent_entity_id,
+            )
+            if resp is not None:
+                return resp
+            return json_message("Home Assistant conversation agent not available", status_code=400)
+        except Exception as err:
+            _LOGGER.error("hass agent call failed: %s", err)
+            return json_message(f"HA agent error: {err}", status_code=500)
+
     async def query(self, query: str | None, current_file: str | None, file_content: str | None,
                    ai_type: str | None = None, cloud_provider: str | None = None,
                    ai_model: str | None = None) -> web.Response:
@@ -655,6 +673,13 @@ Example modern automation:
             ai_type, cloud_provider, ai_model = self._resolve_ai_selection(
                 settings, ai_type, cloud_provider, ai_model
             )
+
+            # Home Assistant conversation agent
+            if ai_type == "hass-agent" and self.hass:
+                return await self._call_hass_agent(
+                    query, current_file, file_content,
+                    settings.get("hassAgentId") or None,
+                )
 
             # Cloud AI providers
             if ai_type == "cloud" and cloud_provider in ["gemini", "openai", "claude"]:

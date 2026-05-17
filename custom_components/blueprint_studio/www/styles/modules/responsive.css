@@ -801,12 +801,12 @@
         overflow-x: hidden;
       }
 
-      .shortcut-item {
+      .shortcuts-modal .shortcut-item {
         flex-wrap: wrap;
         gap: 4px;
       }
 
-      .shortcut-key {
+      .shortcuts-modal .shortcut-key {
         min-width: auto;
       }
 
@@ -844,7 +844,7 @@
         padding: 20px;
       }
 
-      .shortcut-item {
+      .shortcuts-modal .shortcut-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;

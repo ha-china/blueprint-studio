@@ -764,6 +764,14 @@ export function initializeEventHandlers() {
       return false;
     }
 
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key.toLowerCase() === "z" || e.code === "KeyZ")) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      eventBus.emit('ai:undo-diff');
+      return false;
+    }
+
     // Ctrl + B - Toggle Sidebar
     if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "b" || e.code === "KeyB")) {
       e.preventDefault();

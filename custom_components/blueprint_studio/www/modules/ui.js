@@ -125,7 +125,14 @@ export function applyTheme() {
   
   if (isAuto) {
       startThemeObserver();
-  } else if (themeObserver) {
+      state.theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
+  } else if (['native', 'light', 'solarizedLight'].includes(state.themePreset)) {
+      state.theme = 'light';
+  } else {
+      state.theme = 'dark';
+  }
+
+  if (!isAuto && themeObserver) {
       try {
         themeObserver.disconnect();
         themeObserver = null;
@@ -204,12 +211,12 @@ export function applyTheme() {
 
 function updateThemeToggleDisplay() {
     const themeIcons = { 
-        light: "light_mode", dark: "dark_mode", auto: "brightness_auto",
+        native: "laptop_mac", light: "light_mode", dark: "dark_mode", auto: "brightness_auto",
         highContrast: "contrast", solarizedDark: "palette", solarizedLight: "palette",
         ocean: "water", dracula: "nightlight_round", glass: "blur_on", midnightBlue: "nightlight_round"
     };
     const themeLabels = { 
-        light: "Light", dark: "Dark", auto: "Auto",
+        native: "Native", light: "Light", dark: "Dark", auto: "Auto",
         highContrast: "Contrast", solarizedDark: "Solar Dark", solarizedLight: "Solar Light",
         ocean: "Ocean", dracula: "Dracula", glass: "Glass", midnightBlue: "Midnight Blue"
     };
@@ -240,15 +247,28 @@ export function hideGlobalLoading() {
   }
 }
 
+const activeToastKeys = new Set();
+
+function compactToastMessage(message) {
+  const text = String(message || "").replace(/\s+/g, " ").trim();
+  if (text.length <= 64) return text;
+  return `${text.slice(0, 61)}…`;
+}
+
 export function showToast(message, type = "success", duration = 3000, action = null) {
   if (!state.showToasts && type !== "error" && !action) return;
 
   if (type === "error" && duration === 3000) duration = 0;
+  const compactMessage = compactToastMessage(message);
+  const toastKey = `${type}:${compactMessage}`;
+  if (activeToastKeys.has(toastKey)) return;
+  activeToastKeys.add(toastKey);
 
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
+  toast.dataset.toastKey = toastKey;
 
-  const iconMap = { success: "check_circle", error: "error", warning: "warning", info: "info" };
+  const iconMap = { success: "done", error: "error_outline", warning: "warning_amber", info: "info" };
 
   let actionButtonHtml = '';
   if (action && action.text && action.callback) {
@@ -257,33 +277,34 @@ export function showToast(message, type = "success", duration = 3000, action = n
 
   toast.innerHTML = `
     <span class="material-icons">${iconMap[type] || 'info'}</span>
-    <span class="toast-message">${message}</span>
+    <span class="toast-message">${compactMessage}</span>
     ${actionButtonHtml}
   `;
 
   elements.toastContainer.appendChild(toast);
+
+  const removeToast = () => {
+    activeToastKeys.delete(toastKey);
+    toast.remove();
+  };
 
   if (action && action.callback) {
     const actionBtn = toast.querySelector('.toast-action-btn');
     if (actionBtn) {
       actionBtn.addEventListener('click', () => {
         action.callback();
-        toast.remove();
+        removeToast();
       });
     }
-  } else if (duration > 0) {
+  }
+
+  if (duration > 0) {
     setTimeout(() => {
       toast.style.opacity = "0";
       toast.style.transform = "translateX(100%)";
-      setTimeout(() => toast.remove(), 300);
+      setTimeout(removeToast, 180);
     }, duration);
   }
-
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'toast-close-btn';
-  closeBtn.innerHTML = '<span class="material-icons">close</span>';
-  closeBtn.addEventListener('click', () => toast.remove());
-  toast.appendChild(closeBtn);
 }
 
 // ============================================
@@ -741,7 +762,7 @@ export function setThemePreset(preset) {
     state.themePreset = preset;
     if (preset === 'auto') {
         state.theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
-    } else if (preset === 'light' || preset === 'solarizedLight') {
+    } else if (preset === 'native' || preset === 'light' || preset === 'solarizedLight') {
       state.theme = 'light';
     } else if (['dark', 'highContrast', 'solarizedDark', 'ocean', 'dracula', 'glass', 'midnightBlue'].includes(preset)) {
       state.theme = 'dark';

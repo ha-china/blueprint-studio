@@ -206,7 +206,7 @@ BLUEPRINT_SELECTOR_TYPES = {
     'entity', 'device', 'area', 'target', 'number', 'text', 'boolean',
     'select', 'time', 'date', 'datetime', 'color_temp', 'color_rgb',
     'action', 'object', 'template', 'icon', 'duration', 'trigger',
-    'condition', 'theme', 'app', 'addon', 'floor', 'label', 'location',
+    'condition', 'theme', 'addon', 'floor', 'label', 'location',
     'media', 'attribute', 'state', 'country', 'currency',
 }
 

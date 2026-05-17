@@ -72,7 +72,7 @@ const fileContentCache = new Map();
 /**
  * Saves a file to the backend
  */
-export async function saveFile(path, content) {
+export async function saveFile(path, content, options = {}) {
     // SFTP files are saved via the SFTP module
     if (isSftpPathImpl(path)) {
       const tab = state.openTabs.find(t => t.path === path);
@@ -102,7 +102,9 @@ export async function saveFile(path, content) {
       // Refresh files to get updated size
       eventBus.emit('ui:reload-files', { force: true });
       
-      showToast(t("toast.saved", { file: path.split("/").pop() }), "success");
+      if (!options.silentToast) {
+        showToast(t("toast.saved", { file: path.split("/").pop() }), "success");
+      }
 
       // Auto-refresh git status after saving
       eventBus.emit('git:status-check', { fetch: false, silent: true });
@@ -134,6 +136,7 @@ export async function saveCurrentFile(isAutoSave = false) {
     }
 
     const content = tab.content;
+    const previousContent = tab.originalContent;
     const isYaml = tab.path.endsWith(".yaml") || tab.path.endsWith(".yml");
 
     // 1. Validate if it's a YAML file
@@ -162,13 +165,14 @@ export async function saveCurrentFile(isAutoSave = false) {
       setButtonLoading(elements.btnSave, true);
     }
 
-    const success = await saveFile(tab.path, content);
+    const success = await saveFile(tab.path, content, { silentToast: reallyAutoSave });
 
     if (!reallyAutoSave && elements.btnSave) {
       setButtonLoading(elements.btnSave, false);
     }
 
     if (success) {
+      tab.previousContent = previousContent;
       tab.originalContent = content;
       tab.modified = false;
       eventBus.emit('ui:refresh-tabs');
@@ -178,7 +182,7 @@ export async function saveCurrentFile(isAutoSave = false) {
       eventBus.emit('settings:save');
 
       if (reallyAutoSave) {
-        showToast(t("toast.auto_saved", { file: tab.path.split("/").pop() }), "info", 1500);
+        showToast("Saved", "success", 1200);
       }
     }
 }

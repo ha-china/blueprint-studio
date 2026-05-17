@@ -261,7 +261,7 @@ async function _renderForm(blueprintContent, bpInfo, preservedValues = {}) {
     const needsLabels  = allInputs.some(i => i.selector && 'label' in i.selector);
     const needsFloors  = allInputs.some(i => i.selector && 'floor' in i.selector);
     const needsThemes  = allInputs.some(i => i.selector && 'theme' in i.selector);
-    const needsApps    = allInputs.some(i => i.selector && ('app' in i.selector || 'addon' in i.selector));
+    const needsAddons  = allInputs.some(i => i.selector && 'addon' in i.selector);
 
     let entities = [], devices = [], areas = [], labels = [], floors = [], themes = [], addons = [];
     try {
@@ -298,7 +298,7 @@ async function _renderForm(blueprintContent, bpInfo, preservedValues = {}) {
             const r = await fetchWithAuth(`${API_BASE}?action=get_themes`);
             themes = r.themes || [];
         }
-        if (needsApps) {
+        if (needsAddons) {
             const r = await fetchWithAuth(`${API_BASE}?action=get_addons`);
             addons = r.addons || [];
         }
@@ -361,7 +361,10 @@ async function _renderForm(blueprintContent, bpInfo, preservedValues = {}) {
 
     function _checkValidity() {
         const allFilled = requiredKeys.every(k => {
-            return _hasInputValue(_formData[k]);
+            const v = _formData[k];
+            if (Array.isArray(v)) return v.length > 0;
+            if (typeof v === 'boolean') return true;
+            return v !== null && v !== undefined && String(v).trim() !== '';
         });
         if (saveBtn) {
             saveBtn.disabled = !allFilled;
@@ -390,7 +393,10 @@ async function _renderForm(blueprintContent, bpInfo, preservedValues = {}) {
     previewEl.querySelector('#bf-btn-use').addEventListener('click', async () => {
         // Find first unfilled required field
         const firstInvalid = requiredKeys.find(k => {
-            return !_hasInputValue(_formData[k]);
+            const v = _formData[k];
+            if (Array.isArray(v)) return v.length === 0;
+            if (typeof v === 'boolean') return false;
+            return v === null || v === undefined || String(v).trim() === '';
         });
         if (firstInvalid) {
             const fieldEl = previewEl.querySelector(`[data-field="${firstInvalid}"]`);
@@ -693,17 +699,16 @@ function _controlHtml(inp, sType, sCfg, devices, areas, entities, labels, floors
                 <option value="">— Select theme —</option>${opts}
             </select>`;
         }
-        case 'app':
         case 'addon': {
             if (!(addons || []).length) {
                 return `<input type="text" class="bf-input" data-key="${key}"
-                    placeholder="App slug (e.g. core_ssh)" value="${_esc(String(def ?? ''))}">`;
+                    placeholder="Add-on slug (e.g. core_ssh)" value="${_esc(String(def ?? ''))}">`;
             }
             const opts = (addons || []).map(a =>
                 `<option value="${_esc(a.slug)}" ${def === a.slug ? 'selected' : ''}>${_esc(a.name)}</option>`
             ).join('');
             return `<select class="bf-select" data-key="${key}">
-                <option value="">— Select app —</option>${opts}
+                <option value="">— Select add-on —</option>${opts}
             </select>`;
         }
         case 'location': {
@@ -846,59 +851,12 @@ function _durationHtml(key, defaultVal) {
 }
 
 function _targetHtml(key, entities, areas, devices, defaultVal) {
-    const target = _normalizeTargetValue(defaultVal);
-    const entityItems = entities.slice(0, 500).map(e => ({
+    const defVal = defaultVal?.entity_id ?? defaultVal ?? '';
+    const items = entities.slice(0, 500).map(e => ({
         id: e.entity_id,
         name: e.friendly_name ? `${e.friendly_name} (${e.entity_id})` : e.entity_id,
     }));
-    const areaItems = (areas || []).map(a => ({ id: a.id, name: a.name }));
-    const deviceItems = (devices || []).map(d => ({ id: d.id, name: d.name }));
-
-    return `<div class="bf-target-wrap" data-target-key="${_esc(key)}">
-        <div class="bf-target-row">
-            <label class="bf-target-label">Entities</label>
-            ${_searchDropdownHtml(`${key}__entity_id`, entityItems, true, target.entity_id, 'Search entities…')}
-        </div>
-        <div class="bf-target-row">
-            <label class="bf-target-label">Areas</label>
-            ${_searchDropdownHtml(`${key}__area_id`, areaItems, true, target.area_id, 'Search areas…')}
-        </div>
-        <div class="bf-target-row">
-            <label class="bf-target-label">Devices</label>
-            ${_searchDropdownHtml(`${key}__device_id`, deviceItems, true, target.device_id, 'Search devices…')}
-        </div>
-    </div>`;
-}
-
-function _normalizeTargetValue(value) {
-    const normalizeList = (val) => {
-        if (Array.isArray(val)) return val.filter(v => v !== null && v !== undefined && String(v).trim() !== '').map(String);
-        if (val === null || val === undefined || val === '') return [];
-        return [String(val)];
-    };
-
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-        return {
-            entity_id: normalizeList(value.entity_id),
-            area_id: normalizeList(value.area_id),
-            device_id: normalizeList(value.device_id),
-        };
-    }
-
-    return {
-        entity_id: normalizeList(value),
-        area_id: [],
-        device_id: [],
-    };
-}
-
-function _hasInputValue(value) {
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'boolean') return true;
-    if (value && typeof value === 'object') {
-        return Object.values(value).some(_hasInputValue);
-    }
-    return value !== null && value !== undefined && String(value).trim() !== '';
+    return _searchDropdownHtml(key, items, false, defVal, 'Search entities…');
 }
 
 // ─── Control Wiring ──────────────────────────────────────────────────────────
@@ -1021,7 +979,6 @@ function _wireControls(modal, formData) {
     modal.querySelectorAll('.bf-search-dropdown').forEach(container => {
         _wireSearchDropdown(container, formData);
     });
-    _wireTargetControls(modal, formData);
 
     // Datetime composite controls
     modal.querySelectorAll('.bf-datetime-wrap').forEach(wrap => {
@@ -1072,40 +1029,6 @@ function _wireControls(modal, formData) {
     });
 }
 
-function _wireTargetControls(modal, formData) {
-    modal.querySelectorAll('.bf-target-wrap').forEach(wrap => {
-        const key = wrap.dataset.targetKey;
-        if (!key) return;
-
-        const readDropdown = (suffix) => {
-            const dropdown = [...wrap.querySelectorAll('.bf-search-dropdown')]
-                .find(el => el.dataset.key === `${key}__${suffix}`);
-            if (!dropdown) return [];
-            return [...dropdown.querySelectorAll('.bf-pill')]
-                .map(p => p.dataset.value)
-                .filter(Boolean);
-        };
-
-        const update = () => {
-            const target = {};
-            const entityIds = readDropdown('entity_id');
-            const areaIds = readDropdown('area_id');
-            const deviceIds = readDropdown('device_id');
-            if (entityIds.length) target.entity_id = entityIds.length === 1 ? entityIds[0] : entityIds;
-            if (areaIds.length) target.area_id = areaIds.length === 1 ? areaIds[0] : areaIds;
-            if (deviceIds.length) target.device_id = deviceIds.length === 1 ? deviceIds[0] : deviceIds;
-            formData[key] = target;
-            delete formData[`${key}__entity_id`];
-            delete formData[`${key}__area_id`];
-            delete formData[`${key}__device_id`];
-        };
-
-        wrap.addEventListener('bf-dropdown-change', update);
-        wrap.addEventListener('change', update);
-        update();
-    });
-}
-
 function _wireSearchDropdown(container, formData) {
     const key      = container.dataset.key;
     const multiple = container.dataset.multiple === 'true';
@@ -1151,13 +1074,11 @@ function _wireSearchDropdown(container, formData) {
                 if (pillsWrap) pillsWrap.insertBefore(pill, search);
                 search.value = '';
                 _updateMultiValue(container, key, formData);
-                _emitDropdownChange(container);
             } else {
                 search.value = name;
                 if (hidden) hidden.value = id;
                 formData[key] = id;
                 list.style.display = 'none';
-                _emitDropdownChange(container);
             }
         });
     });
@@ -1167,13 +1088,8 @@ function _wireSearchDropdown(container, formData) {
         btn.addEventListener('click', () => {
             btn.closest('.bf-pill').remove();
             _updateMultiValue(container, key, formData);
-            _emitDropdownChange(container);
         });
     });
-}
-
-function _emitDropdownChange(container) {
-    container.dispatchEvent(new CustomEvent('bf-dropdown-change', { bubbles: true }));
 }
 
 function _filterItems(query, items) {
@@ -1589,16 +1505,6 @@ details[open] .bf-chevron { transform: rotate(180deg); }
 .bf-location-wrap { display: flex; flex-direction: column; gap: 8px; }
 .bf-location-row { display: flex; align-items: center; gap: 8px; }
 .bf-location-label { font-size: .82em; color: var(--text-secondary); width: 80px; flex-shrink: 0; }
-
-/* ── Target selector ── */
-.bf-target-wrap { display: flex; flex-direction: column; gap: 10px; }
-.bf-target-row { display: flex; flex-direction: column; gap: 5px; }
-.bf-target-label {
-    font-size: .78em;
-    color: var(--text-secondary);
-    font-weight: 600;
-    text-transform: uppercase;
-}
 
 /* ── Validation ── */
 .bf-field-error .bf-control input,

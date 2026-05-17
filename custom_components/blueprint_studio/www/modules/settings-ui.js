@@ -1078,6 +1078,14 @@ export async function showAppSettings() {
                     <div style="font-size: 11px; color: var(--text-secondary);">Use hosted providers such as Gemini, OpenAI, Claude, or an OpenAI-compatible relay.</div>
                   </div>
                 </label>
+
+                <label style="display: flex; align-items: center; padding: 8px; border-radius: 6px; cursor: pointer; background: ${state.aiType === 'hass-agent' ? 'var(--bg-secondary)' : 'transparent'}; border: 1px solid ${state.aiType === 'hass-agent' ? 'var(--accent-color)' : 'var(--border-color)'};">
+                  <input type="radio" name="ai-type" value="hass-agent" ${state.aiType === 'hass-agent' ? 'checked' : ''} style="margin-right: 8px;">
+                  <div>
+                    <div style="font-weight: 500; font-size: 13px;">Home Assistant Agent</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">Route queries through a HA conversation agent (e.g. Claw Assistant). Supports file editing with diff view.</div>
+                  </div>
+                </label>
               </div>
 
               <!-- Rule-based Info -->
@@ -1192,6 +1200,21 @@ export async function showAppSettings() {
                 </div>
               </div>
 
+              <!-- Home Assistant Agent Configuration -->
+              <div id="hass-agent-config" style="display: ${state.aiType === 'hass-agent' ? 'block' : 'none'};">
+                <div style="font-weight: 500; margin-bottom: 8px; font-size: 13px;">Conversation Agent</div>
+                <select id="hass-agent-select" class="git-settings-input" style="width: 100%; margin-bottom: 8px;">
+                  <option value="">Auto-detect (prefer Claw Assistant)</option>
+                  ${(state.hassAgents || []).map(a => `<option value="${a.id}" ${state.hassAgentId === a.id ? 'selected' : ''}>${a.name} (${a.platform})</option>`).join('')}
+                </select>
+                <button id="btn-refresh-hass-agents" type="button" class="git-settings-input" style="width: 100%; margin-bottom: 8px; cursor: pointer; padding: 6px; text-align: center;">
+                  <span class="material-icons" style="font-size: 14px; vertical-align: middle;">refresh</span> Refresh Agents
+                </button>
+                <div style="font-size: 11px; color: var(--text-secondary); padding: 8px; background: var(--bg-secondary); border-radius: 4px;">
+                  Route queries through a Home Assistant conversation agent (e.g. Claw Assistant). The agent can read and edit files directly — changes are shown as diffs for you to accept or reject.
+                </div>
+              </div>
+
               <button class="btn-primary" id="btn-save-ai-settings" style="margin-top: 12px; width: 100%; font-size: 12px; height: 32px;">
                   Apply AI Settings
               </button>
@@ -1268,6 +1291,18 @@ export async function showAppSettings() {
                 </div>
                 <button class="btn-secondary" id="btn-clear-pwa-token" style="padding: 6px 12px; font-size: 12px;">
                     ${t("settings.advanced.pwa_token_btn")}
+                </button>
+            </div>
+
+            <div class="git-settings-label" style="margin-top: 20px;">Frontend Cache</div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--divider-color);">
+                <div style="flex: 1;">
+                    <div style="font-weight: 500; margin-bottom: 4px;">Clear Frontend Cache</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Unregister Service Worker, purge CacheStorage, and hard-reload. Fixes stale UI after updates.</div>
+                </div>
+                <button class="btn-secondary" id="btn-clear-frontend-cache" style="padding: 6px 12px; font-size: 12px; white-space: nowrap; margin-left: 12px;">
+                    Clear &amp; Reload
                 </button>
             </div>
 
@@ -1866,6 +1901,7 @@ export async function showAppSettings() {
     const ruleBasedInfo = document.getElementById("rule-based-info");
     const localAiConfig = document.getElementById("local-ai-config");
     const cloudAiConfig = document.getElementById("cloud-ai-config");
+    const hassAgentConfigSection = document.getElementById("hass-agent-config");
 
     aiTypeRadios.forEach(radio => {
       radio.addEventListener("change", async (e) => {
@@ -1876,6 +1912,8 @@ export async function showAppSettings() {
         if (ruleBasedInfo) ruleBasedInfo.style.display = aiType === 'rule-based' ? 'block' : 'none';
         if (localAiConfig) localAiConfig.style.display = aiType === 'local-ai' ? 'block' : 'none';
         if (cloudAiConfig) cloudAiConfig.style.display = aiType === 'cloud' ? 'block' : 'none';
+        if (hassAgentConfigSection) hassAgentConfigSection.style.display = aiType === 'hass-agent' ? 'block' : 'none';
+        if (aiType === 'hass-agent') _refreshHassAgents();
 
         // Update radio button styling
         aiTypeRadios.forEach(r => {
@@ -1892,7 +1930,7 @@ export async function showAppSettings() {
         });
 
         await saveSettingsImpl();
-        showToast(`AI Type set to ${aiType === 'rule-based' ? 'Rule-based' : aiType === 'local-ai' ? 'Local AI' : 'Cloud AI'}`, "success");
+        showToast(`AI Type set to ${aiType === 'rule-based' ? 'Rule-based' : aiType === 'local-ai' ? 'Local AI' : aiType === 'hass-agent' ? 'Home Assistant Agent' : 'Cloud AI'}`, "success");
       });
     });
 
@@ -1991,6 +2029,35 @@ export async function showAppSettings() {
       });
     }
 
+    const hassAgentSelect = document.getElementById("hass-agent-select");
+    if (hassAgentSelect) {
+      hassAgentSelect.addEventListener("change", async (e) => {
+        state.hassAgentId = e.target.value;
+        await saveSettingsImpl();
+      });
+    }
+    const btnRefreshHassAgents = document.getElementById("btn-refresh-hass-agents");
+    if (btnRefreshHassAgents) {
+      btnRefreshHassAgents.addEventListener("click", () => _refreshHassAgents());
+    }
+    async function _refreshHassAgents() {
+      try {
+        const data = await fetchWithAuth(`${API_BASE}?action=list_hass_agents`);
+        if (data && data.agents) {
+          state.hassAgents = data.agents;
+          const sel = document.getElementById("hass-agent-select");
+          if (sel) {
+            sel.innerHTML = '<option value="">Auto-detect</option>' +
+              data.agents.map(a => `<option value="${a.id}" ${state.hassAgentId === a.id ? 'selected' : ''}>${a.name} (${a.platform})</option>`).join('');
+          }
+          showToast(`Found ${data.agents.length} conversation agent(s)`, "success");
+        }
+      } catch (err) {
+        showToast(`Failed to fetch agents: ${err.message}`, "error");
+      }
+    }
+    if (state.aiType === 'hass-agent') _refreshHassAgents();
+
     bindTextSetting("ollama-url", "ollamaUrl");
     bindTextSetting("lm-studio-url", "lmStudioUrl");
     bindTextSetting("custom-ai-url", "customAiUrl");
@@ -2061,6 +2128,7 @@ export async function showAppSettings() {
         state.lmStudioModel = readValue("lm-studio-model", '');
         state.customAiUrl = readValue("custom-ai-url", '');
         state.customAiModel = readValue("custom-ai-model", '');
+        state.hassAgentId = document.getElementById("hass-agent-select")?.value || '';
 
         // Cloud AI settings
         state.cloudProvider = document.getElementById("cloud-provider-select")?.value || 'gemini';
@@ -2236,6 +2304,30 @@ export async function showAppSettings() {
           if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
             window.location.reload();
           }
+        }
+      });
+    }
+
+    const btnClearCache = document.getElementById("btn-clear-frontend-cache");
+    if (btnClearCache) {
+      btnClearCache.addEventListener("click", async () => {
+        btnClearCache.disabled = true;
+        btnClearCache.textContent = "Clearing...";
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+          }
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+          window.location.reload(true);
+        } catch (e) {
+          console.error("Cache clear failed:", e);
+          showToast("Cache clear failed: " + e.message, "error");
+          btnClearCache.disabled = false;
+          btnClearCache.textContent = "Clear & Reload";
         }
       });
     }

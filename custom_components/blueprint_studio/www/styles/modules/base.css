@@ -25,30 +25,30 @@
 
 /* Theme variables will be set dynamically via JavaScript */
     :root {
-      --bg-primary: #1e1e1e;
-      --bg-secondary: #252526;
-      --bg-tertiary: #2d2d30;
-      --bg-hover: #3c3c3c;
-      --bg-active: #094771;
-      --text-primary: #cccccc;
-      --text-secondary: #858585;
-      --text-muted: #6e6e6e;
-      --border-color: #3c3c3c;
-      --accent-color: #0e639c;
-      --accent-hover: #1177bb;
-      --success-color: #4ec9b0;
-      --warning-color: #dcdcaa;
-      --error-color: #f14c4c;
-      --icon-folder: #dcb67a;
-      --icon-yaml: #cb4b16;
-      --icon-json: #cbcb41;
-      --icon-python: #3572a5;
-      --icon-js: #f1e05a;
-      --icon-default: #858585;
-      --modal-bg: #2d2d30;
-      --input-bg: #3c3c3c;
-      --shadow-color: rgba(0, 0, 0, 0.5);
-      --cm-theme: material-darker;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f7;
+      --bg-tertiary: #ececee;
+      --bg-hover: #e8e8ea;
+      --bg-active: #636366;
+      --text-primary: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-muted: #aeaeb2;
+      --border-color: #d2d2d7;
+      --accent-color: #636366;
+      --accent-hover: #545456;
+      --success-color: #28cd41;
+      --warning-color: #ff9f0a;
+      --error-color: #ff3b30;
+      --icon-folder: #636366;
+      --icon-yaml: #ff3b30;
+      --icon-json: #ff9f0a;
+      --icon-python: #28cd41;
+      --icon-js: #ff9f0a;
+      --icon-default: #6e6e73;
+      --modal-bg: #ffffff;
+      --input-bg: #ffffff;
+      --shadow-color: rgba(0, 0, 0, 0.12);
+      --cm-theme: default;
       --safe-area-top: env(safe-area-inset-top, 0px);
       --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     }

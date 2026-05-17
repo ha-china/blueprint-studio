@@ -181,7 +181,7 @@ export function createEditor(container = null, isPrimary = true) {
       completeSingle: false,
       closeOnUnfocus: true,
       alignWithWord: true,
-      closeCharacters: /[\s()\[\]{};,]/
+      closeCharacters: /[\s()\[\]{};:>,]/
     },
     extraKeys: {
       "Cmd-D": (cm) => selectNextOccurrence(cm),

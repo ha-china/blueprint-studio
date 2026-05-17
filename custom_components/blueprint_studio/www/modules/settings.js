@@ -137,9 +137,9 @@ export async function loadSettings() {
     state.claudeApiKey = settings.claudeApiKey || null;
 
     // New UI customization settings
-    state.themePreset = settings.themePreset || "dark";
+    state.themePreset = settings.themePreset || "native";
     state.accentColor = settings.accentColor || null;
-    state.fontSize = parseInt(settings.fontSize) || 14;
+    state.fontSize = parseInt(settings.fontSize) || 13;
     state.fontFamily = settings.fontFamily || localSettings.fontFamily || "'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace";
     state.tabSize = parseInt(settings.tabSize) || 2;
     state.indentWithTabs = settings.indentWithTabs || false;
@@ -262,6 +262,7 @@ export async function loadSettings() {
     state.lmStudioModel = settings.lmStudioModel || "";
     state.customAiUrl = settings.customAiUrl || "";
     state.customAiModel = settings.customAiModel || "";
+    state.hassAgentId = settings.hassAgentId || "";
 
     // Cloud AI settings
     state.cloudProvider = settings.cloudProvider || settings.aiProvider || "gemini";
@@ -353,6 +354,7 @@ export async function saveSettings() {
       lmStudioModel: state.lmStudioModel,
       customAiUrl: state.customAiUrl,
       customAiModel: state.customAiModel,
+      hassAgentId: state.hassAgentId,
       // Cloud AI settings
       cloudProvider: state.cloudProvider,
       aiModel: state.aiModel,

@@ -122,6 +122,13 @@ async def ai_query(ai_manager, data):
     )
 
 
+async def list_hass_agents(hass):
+    """Return available Home Assistant conversation agents."""
+    from .claw_hook import list_conversation_agents
+    agents = list_conversation_agents(hass)
+    return json_response({"success": True, "agents": agents})
+
+
 async def ai_get_models(ai_manager, data):
     """Return model options for the current AI configuration."""
     settings_override = data.get("settings") if isinstance(data.get("settings"), dict) else data

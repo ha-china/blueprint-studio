@@ -197,9 +197,9 @@ def _validate_automation(item: dict, lines: list[str]) -> list[dict]:
                 errors.append({
                     "line": line_num,
                     "type": "missing_trigger",
-                    "message": "Automation missing 'triggers:'",
+                    "message": "Automation missing 'trigger:' or 'triggers:'",
                     "solution": "Add at least one trigger",
-                    "example": "triggers:\n  - trigger: time\n    at: '10:00:00'",
+                    "example": "trigger:\n  platform: time\n  at: '10:00:00'",
                     "original": line.strip()
                 })
                 break

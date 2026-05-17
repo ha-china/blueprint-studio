@@ -133,6 +133,7 @@ import {
 import {
   updateSplitViewButtons
 } from './split-view.js';
+import { initAiDiffListener, enqueueAiDiff } from './git-diff.js';
 import { initializeEventHandlers } from './coordinators/index.js';
 import { 
   isTextFile, 
@@ -194,6 +195,51 @@ export async function init() {
     // Load actual files into tree
     await Promise.all(eventBus.emit('ui:reload-files', { force: true }));
 
+    try {
+      const raw = localStorage.getItem('blueprint_studio_pending_ai_edit');
+      console.log('[BPS-init] localStorage check:', raw ? 'FOUND' : 'empty');
+      if (raw) {
+        localStorage.removeItem('blueprint_studio_pending_ai_edit');
+        const data = JSON.parse(raw);
+        console.log('[BPS-init] consuming localStorage:', data.action, data.path);
+        if (data.action === 'navigate' && data.path) {
+          const { revealAndOpenFile } = await import('./file-nav-helper.js');
+          revealAndOpenFile(data.path, 'tool').catch((e) => console.warn('[BPS-init] navigate error', e));
+        } else if (data.path) {
+          enqueueAiDiff({
+            path: data.path,
+            oldContent: data.old_content || "",
+            newContent: data.new_content || "",
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("[BPS-init] Failed to consume pending AI edit", err);
+    }
+
+    window.addEventListener('storage', async (event) => {
+      if (event.key === 'blueprint_studio_pending_ai_edit' && event.newValue) {
+        console.log('[BPS-storage] storage event fired:', event.newValue.substring(0, 100));
+        try {
+          localStorage.removeItem('blueprint_studio_pending_ai_edit');
+          const data = JSON.parse(event.newValue);
+          console.log('[BPS-storage] processing:', data.action, data.path);
+          if (data.action === 'navigate' && data.path) {
+            const { revealAndOpenFile } = await import('./file-nav-helper.js');
+            revealAndOpenFile(data.path, 'tool').catch((e) => console.warn('[BPS-storage] navigate error', e));
+          } else if (data.path) {
+            enqueueAiDiff({
+              path: data.path,
+              oldContent: data.old_content || "",
+              newContent: data.new_content || "",
+            });
+          }
+        } catch (e) {
+          console.warn('[BPS-storage] error', e);
+        }
+      }
+    });
+
     // Non-blocking git status — don't hold up page load
     // First check uses fetch=false (local only); polling will fetch from remote in ~30s
     checkGitStatusIfEnabled(false, true).catch(() => {});
@@ -205,11 +251,13 @@ export async function init() {
     // Initialize status bar interactions
     initStatusBarEvents();
 
-    // Set initial sidebar state
-    if (isMobile()) {
-      elements.sidebar.classList.remove("visible");
-      state.sidebarVisible = false;
-    }
+    // Initialize AI diff listener (claw_assistant hook)
+    initAiDiffListener();
+
+    elements.sidebar.classList.remove("visible");
+    elements.sidebar.classList.add("hidden");
+    if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove("visible");
+    state.sidebarVisible = false;
 
     // ⚡ PARALLEL INITIALIZATION - Run independent operations concurrently
     const [versionData] = await Promise.all([
@@ -254,9 +302,15 @@ export async function init() {
       }
     }
 
-    // Restore sidebar view
+    // Restore sidebar view panels (without expanding the sidebar)
     if (state.activeSidebarView) {
-      eventBus.emit('ui:switch-sidebar-view', state.activeSidebarView);
+      const v = state.activeSidebarView;
+      if (elements.activityExplorer) elements.activityExplorer.classList.toggle("active", v === "explorer");
+      if (elements.activitySearch) elements.activitySearch.classList.toggle("active", v === "search");
+      if (elements.activitySftp) elements.activitySftp.classList.toggle("active", v === "sftp");
+      if (elements.viewExplorer) { elements.viewExplorer.style.display = v === "explorer" ? "flex" : "none"; elements.viewExplorer.classList.toggle("hidden", v !== "explorer"); }
+      if (elements.viewSearch) { elements.viewSearch.style.display = v === "search" ? "flex" : "none"; elements.viewSearch.classList.toggle("hidden", v !== "search"); }
+      if (elements.viewSftp) { elements.viewSftp.style.display = v === "sftp" ? "flex" : "none"; elements.viewSftp.classList.toggle("hidden", v !== "sftp"); }
     }
 
     // ⚡ CRITICAL: Restore open tabs AFTER files are loaded

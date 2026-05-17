@@ -15,7 +15,7 @@ export const state = {
   contentSearchEnabled: false,
   contentSearchResults: null,
   isMobile: window.innerWidth <= MOBILE_BREAKPOINT,
-  sidebarVisible: window.innerWidth > MOBILE_BREAKPOINT,
+  sidebarVisible: false,
   activeSidebarView: "explorer", // Current active sidebar view (explorer, search, sftp)
   terminalVisible: false, // Terminal panel state
   sshHosts: [], // Saved SSH connections
@@ -45,7 +45,7 @@ export const state = {
 
   // AI Configuration (New Structure)
   aiIntegrationEnabled: false,
-  aiType: "rule-based", // "none" | "rule-based" | "local-ai" | "cloud"
+  aiType: "rule-based", // "none" | "rule-based" | "local-ai" | "cloud" | "hass-agent"
 
   // Legacy field for migration
   aiProvider: "local",
@@ -58,6 +58,10 @@ export const state = {
   lmStudioModel: "",
   customAiUrl: "",
   customAiModel: "",
+
+  // Home Assistant Agent Settings
+  hassAgentId: "",
+  hassAgents: [],
 
   // Cloud AI Settings
   cloudProvider: "gemini", // "gemini" | "openai" | "claude"
@@ -73,6 +77,7 @@ export const state = {
     "local:ollama": [],
     "local:lm-studio": [],
     "local:custom": [],
+    "local:hass": [],
   },
   aiModelFetchMeta: {
     "cloud:gemini": { loading: false, error: "", fetchedAt: null, count: 0 },
@@ -81,10 +86,11 @@ export const state = {
     "local:ollama": { loading: false, error: "", fetchedAt: null, count: 0 },
     "local:lm-studio": { loading: false, error: "", fetchedAt: null, count: 0 },
     "local:custom": { loading: false, error: "", fetchedAt: null, count: 0 },
+    "local:hass": { loading: false, error: "", fetchedAt: null, count: 0 },
   },
-  themePreset: "dark",
+  themePreset: "native",
   accentColor: null,
-  fontSize: 14,
+  fontSize: 13,
   fontFamily: "'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace",
   tabSize: 2,
   indentWithTabs: false,

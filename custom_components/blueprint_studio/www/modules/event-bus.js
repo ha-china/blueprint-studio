@@ -72,3 +72,20 @@ class EventBus {
 }
 
 export const eventBus = new EventBus();
+window.__bpsEventBus = {
+  emit(event, data) {
+    if (eventBus.listeners[event] && eventBus.listeners[event].length > 0) {
+      return eventBus.emit(event, data);
+    }
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      if (eventBus.listeners[event] && eventBus.listeners[event].length > 0) {
+        clearInterval(timer);
+        eventBus.emit(event, data);
+      }
+      if (tries > 40) clearInterval(timer);
+    }, 250);
+    return [];
+  }
+};

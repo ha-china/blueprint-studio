@@ -468,72 +468,27 @@ def convert_automation_to_blueprint(content: str, name: str = "") -> str:
     _raw_desc = auto.get('description') or ''
     bp_description = ' '.join(str(_raw_desc).split())
 
-    # --- Extract entity IDs from entity_id/entities keys ---
-    # Scan the YAML text so selections or slightly invalid automations still work,
-    # but keep extraction scoped to entity-bearing keys to avoid templated prose.
+    # --- Extract entity IDs from content (regex — safer than YAML traversal) ---
+    # Pattern A: inline form  →  entity_id: domain.entity
+    entity_inline_pat = _re.compile(r'(?:entity_id|entities):\s*([a-z0-9_]+\.[a-z0-9_]+)', _re.IGNORECASE)
+    # Pattern B: list form   →  entity_id:\n  - domain.entity
+    entity_list_pat = _re.compile(
+        r'(?:entity_id|entities):\s*\n((?:[ \t]+-[ \t]+[a-z0-9_]+\.[a-z0-9_]+[ \t]*\n?)+)',
+        _re.IGNORECASE | _re.MULTILINE
+    )
     found_entities = []
     seen_entities: set = set()
-    _entity_ref_pat = _re.compile(r'(?<![A-Za-z0-9_])([a-z0-9_]+\.[a-z0-9_]+)(?![A-Za-z0-9_])', _re.IGNORECASE)
-    _entity_key_pat = _re.compile(r'^(\s*)(?:-\s+)?(?:entity_id|entities):(?:\s*(.*))?$', _re.IGNORECASE)
 
     def _add_entity(eid: str) -> None:
         if eid not in seen_entities:
             seen_entities.add(eid)
             found_entities.append(eid)
 
-    def _add_entities_from_value(value) -> None:
-        if isinstance(value, str):
-            if '{{' in value or '}}' in value or value.strip().startswith('!input'):
-                return
-            for ent_match in _entity_ref_pat.finditer(value):
-                _add_entity(ent_match.group(1))
-        elif isinstance(value, (list, tuple, set)):
-            for item in value:
-                _add_entities_from_value(item)
-
-    content_lines = content.splitlines()
-    line_idx = 0
-    while line_idx < len(content_lines):
-        line = content_lines[line_idx]
-        key_match = _entity_key_pat.match(line)
-        if not key_match:
-            line_idx += 1
-            continue
-
-        key_indent = len(key_match.group(1).replace('\t', '  '))
-        inline_value = (key_match.group(2) or '').strip()
-        if inline_value:
-            _add_entities_from_value(inline_value)
-            line_idx += 1
-            continue
-
-        line_idx += 1
-        while line_idx < len(content_lines):
-            child_line = content_lines[line_idx]
-            if not child_line.strip():
-                line_idx += 1
-                continue
-            child_indent = len(child_line) - len(child_line.lstrip(' \t'))
-            if child_indent <= key_indent:
-                break
-            _add_entities_from_value(child_line)
-            line_idx += 1
-
-    def _walk_entity_keys(node, parent_key: str | None = None) -> None:
-        if isinstance(node, dict):
-            for key, value in node.items():
-                key_str = str(key)
-                if key_str in ('entity_id', 'entities'):
-                    _add_entities_from_value(value)
-                else:
-                    _walk_entity_keys(value, key_str)
-        elif isinstance(node, list):
-            for item in node:
-                _walk_entity_keys(item, parent_key)
-        elif parent_key in ('entity_id', 'entities'):
-            _add_entities_from_value(node)
-
-    _walk_entity_keys(auto)
+    for m in entity_inline_pat.finditer(content):
+        _add_entity(m.group(1))
+    for m in entity_list_pat.finditer(content):
+        for eid in _re.findall(r'[a-z0-9_]+\.[a-z0-9_]+', m.group(1)):
+            _add_entity(eid)
 
     # Build input map: entity_id → input_name
     input_map: dict[str, str] = {}
@@ -1197,14 +1152,13 @@ def convert_automation_to_blueprint(content: str, name: str = "") -> str:
             # Replace: use the prefix up to the key, then the key with !input
             prefix = match.group(0)[:match.group(0).index(yaml_key + ':')]
             content = content.replace(match.group(0), f'{prefix}{yaml_key}: !input {iname}', 1)
-            selector = "app: {}" if yaml_key == "addon" else "text: {}"
             input_block_lines.append(
                 f"    {iname}:\n"
                 f"      name: {iname.replace('_', ' ').title()}\n"
                 f"      description: {desc}\n"
                 f"      default: \"{val}\"\n"
                 f"      selector:\n"
-                f"        {selector}"
+                f"        text: {{}}"
             )
 
     # Number-type extraction
@@ -1502,9 +1456,6 @@ def convert_automation_to_blueprint(content: str, name: str = "") -> str:
     # Replace entity IDs with !input references (skip Jinja2 templates)
     for eid, iname in input_map.items():
         body = _replace_outside_templates(body, eid, f'!input {iname}')
-    # If the source had quoted entity IDs, the replacement can leave
-    # `"!input name"` behind. Home Assistant requires the tag itself.
-    body = _re.sub(r'([\'"])!input\s+([A-Za-z0-9_]+)\1', r'!input \2', body)
     # Replace numeric values with !input references (first occurrence only)
     for input_name, key, value in numeric_inputs:
         body = _replace_outside_templates(body, f'{key}: {value}', f'{key}: !input {input_name}', 1)
