@@ -11,7 +11,11 @@ export function showSidebar() {
   // never leaves the sidebar in a mixed state.
   elements.sidebar.classList.remove("hidden");
   elements.sidebar.classList.add("visible");
-  elements.sidebarOverlay.classList.add("visible");
+  if (state.isMobile) {
+    elements.sidebarOverlay.classList.add("visible");
+  } else {
+    elements.sidebarOverlay.classList.remove("visible");
+  }
 }
 
 /**
