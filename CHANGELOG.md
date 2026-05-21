@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-21
+
+- **New HA Agent AI mode** — Route AI queries through Home Assistant conversation agents (e.g. Claw Assistant https://github.com/ha-china/ha_claw) with file edit and diff view support.
+
+- **Complete Git diff viewer rewrite** — New side-by-side and unified diff display with syntax highlighting, context expansion, and inline commenting.
+
+- **File navigation overhaul** — New `file-nav-helper.js` module for path-based reveal-and-open, breadcrumb navigation, and back-button support.
+
+- **Theme system expansion** — Major `themes.css` additions for consistent dark/light mode across all components.
+
+- **Blueprint conversion improvements** — Simplified entity extraction in `ai_generators.py` using regex over YAML traversal for robustness.
+
+- **Frontend cache management** — New "Clear Frontend Cache" button in settings.
+
+- **WebSocket file-change sync** — Real-time tab/tree updates on file create, delete, and rename operations.
+
 - **Folder ZIP uploads no longer falsely report that the destination already exists** — Local "Upload Folder (ZIP)" now matches SFTP behaviour by extracting into `target-folder/zip-name` instead of checking the current target folder itself. Local uploads also now show the same merge/replace conflict flow when the zip-named folder really does already exist.
 
 - **Terminal-created files appear in the file tree without a page reload** — External filesystem changes now trigger frontend refreshes when Home Assistant `folder_watcher` events are available. The integrated terminal also runs a lightweight file-tree snapshot check while open, so files created by commands such as `python -m tinytuya wizard` are picked up automatically.
@@ -947,6 +963,7 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 
 
 ## Version History
+- **2.5.0** - HA Agent AI Mode, Diff Viewer Rewrite & File Navigation Overhaul
 - **2.4.8** - Improved Diff Navigation, Stable Settings Sync & UI Fixes
 - **2.4.7** - Custom AI & Stability Improvements
 - **2.4.6** - Bug Fix for yaml anchors and UUIDs no longer flagged as invalid entity IDs
@@ -978,7 +995,8 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 - **1.2.0** - GitHub Integration, Pin Favorites & Auto-Refresh
 - **1.0.0** - First stable release
 
-[Unreleased]: https://github.com/soulripper13/blueprint-studio/compare/v2.4.8...HEAD
+[Unreleased]: https://github.com/soulripper13/blueprint-studio/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/soulripper13/blueprint-studio/releases/tag/v2.5.0
 [2.4.8]: https://github.com/soulripper13/blueprint-studio/releases/tag/v2.4.8
 [2.4.7]: https://github.com/soulripper13/blueprint-studio/releases/tag/v2.4.7
 [2.4.6]: https://github.com/soulripper13/blueprint-studio/releases/tag/v2.4.6
