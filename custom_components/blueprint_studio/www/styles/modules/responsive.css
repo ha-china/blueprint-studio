@@ -330,6 +330,7 @@
       /* Mobile Touch Optimizations */
       .tree-item {
         padding: 12px 10px;
+        padding-left: calc(10px + var(--depth, 0) * 20px);
         min-height: 48px;
         font-size: 14px;
         -webkit-tap-highlight-color: rgba(14, 99, 156, 0.3);
@@ -914,6 +915,7 @@
 
       .tree-item {
         padding: 10px 8px;
+        padding-left: calc(8px + var(--depth, 0) * 18px);
         font-size: 13px;
       }
 
@@ -969,6 +971,7 @@
       /* Reduce padding in landscape */
       .tree-item {
         padding: 8px 10px;
+        padding-left: calc(10px + var(--depth, 0) * 18px);
         min-height: 40px;
       }
     }
