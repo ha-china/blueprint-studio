@@ -1,24 +1,22 @@
-# Blueprint Studio 🚀
+# Blueprint Studio for Home Assistant 🚀
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-[![GitHub Release](https://img.shields.io/github/release/soulripper13/blueprint-studio.svg)](https://github.com/soulripper13/blueprint-studio/releases)
-[![License](https://img.shields.io/github/license/soulripper13/blueprint-studio.svg)](LICENSE)
-![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.4.0%2B-blue.svg)
-![Maintenance](https://img.shields.io/maintenance/yes/2026.svg)
-[![GitHub Stars](https://img.shields.io/github/stars/soulripper13/blueprint-studio?style=social)](https://github.com/soulripper13/blueprint-studio)
-[![GitHub Issues](https://img.shields.io/github/issues/soulripper13/blueprint-studio?style=flat-square)](https://github.com/soulripper13/blueprint-studio/issues)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/default)
+[![GitHub Release](https://img.shields.io/github/release/soulripper13/blueprint-studio.svg?style=for-the-badge)](https://github.com/soulripper13/blueprint-studio/releases)
+[![GitHub Issues](https://img.shields.io/github/issues/soulripper13/blueprint-studio.svg?style=for-the-badge)](https://github.com/soulripper13/blueprint-studio/issues)
 ![Downloads](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Downloads&suffix=%20installs&cacheSeconds=15600&style=for-the-badge&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.blueprint_studio.total)
 [![Support Development](https://img.shields.io/badge/Support-Development-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/soulripper13)
+[![Support via PayPal](https://img.shields.io/badge/Support-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/SKatoaroo)
 
 <div align="center">
-  <img src="https://dummyimage.com/800x60/0d1117/ffffff&text=Blueprint+Studio+-+Edit+Your+HA+Configs+Like+a+Pro" alt="Hero Banner">
-  <br><br>
-  <strong>A modern, feature-rich file editor for Home Assistant. Edit your YAML configuration files and other text-based files directly from the Home Assistant UI with a professional VS Code-like experience. Say goodbye to clunky SSH sessions and hello to seamless editing! ✨</strong> 
-  <br><br> 
-  <img src="icon.png" alt="Logo" style="width: 100px; height: auto;">
-  <br><br>
-  <a href="https://ko-fi.com/soulripper13">
-    <img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" alt="Support Blueprint Studio on Ko-fi" width="220">
+  <img src="icon.png" alt="Logo" width="120">
+  <h3>Blueprint Studio for Home Assistant</h3>
+  <p>A modern, feature-rich file editor with AI-powered assistance and full Git integration.</p>
+  
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=soulripper13&repository=blueprint-studio&category=integration">
+    <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open in HACS">
+  </a>
+  <a href="https://my.home-assistant.io/redirect/config_flow_start/?domain=blueprint_studio">
+    <img src="https://my.home-assistant.io/badges/config_flow_start.svg" alt="Add Integration">
   </a>
 </div>
 
