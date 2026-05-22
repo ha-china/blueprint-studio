@@ -1,10 +1,10 @@
 # Blueprint Studio for Home Assistant 🚀
 
 [![HACS Default](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/default)
-[![GitHub Release](https://img.shields.io/github/release/soulripper13/blueprint-studio.svg?style=for-the-badge)](https://github.com/soulripper13/blueprint-studio/releases)
+[![GitHub Release](https://img.shields.io/github/release/ha-china/blueprint-studio.svg?style=for-the-badge)](https://github.com/ha-china/blueprint-studio/releases)
 [![GitHub License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
-[![GitHub Issues](https://img.shields.io/github/issues/soulripper13/blueprint-studio.svg?style=for-the-badge)](https://github.com/soulripper13/blueprint-studio/issues)
-[![GitHub Stars](https://img.shields.io/badge/Stars-94-blue.svg?style=for-the-badge&logo=github)](https://github.com/soulripper13/blueprint-studio/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/ha-china/blueprint-studio.svg?style=for-the-badge)](https://github.com/ha-china/blueprint-studio/issues)
+[![GitHub Stars](https://img.shields.io/badge/Stars-94-blue.svg?style=for-the-badge&logo=github)](https://github.com/ha-china/blueprint-studio/stargazers)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.4.0%2B-blue.svg?style=for-the-badge)
 ![Maintenance](https://img.shields.io/maintenance/yes/2026.svg?style=for-the-badge)
 ![Downloads](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Downloads&suffix=%20installs&cacheSeconds=15600&style=for-the-badge&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.blueprint_studio.total)
@@ -252,7 +252,7 @@ This integration is best installed via the [Home Assistant Community Store (HACS
 1. **Add the Custom Repository**:
     * Ensure HACS is installed.
     * Go to **HACS > Integrations > ... (three dots) > Custom repositories**.
-    * Add this repository's URL: `https://github.com/soulripper13/blueprint-studio`
+    * Add this repository's URL: `https://github.com/ha-china/blueprint-studio`
     * Select the category **Integration** and click **Add**.
  
       [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store (HACS).](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=soulripper13&repository=blueprint-studio&category=integration)
@@ -270,7 +270,7 @@ This integration is best installed via the [Home Assistant Community Store (HACS
     * The setup wizard will guide you through the final configuration steps.
 
 ### Manual Installation 📥
-1. Download the latest release from the [releases page](https://github.com/soulripper13/blueprint-studio/releases) 📦
+1. Download the latest release from the [releases page](https://github.com/ha-china/blueprint-studio/releases) 📦
 2. Extract the `blueprint_studio` folder to your `custom_components` directory 📂
 3. Restart Home Assistant 🔄
 4. Go to Settings → Devices & Services → Add Integration → Blueprint Studio ⚙️
@@ -612,7 +612,7 @@ Contributions are welcome! Here's how you can help: 🌍
 
 ## 📞 Support
 If you encounter any issues or have feature requests:  
-- Open an issue on [GitHub Issues](https://github.com/soulripper13/blueprint-studio/issues) 🐛  
+- Open an issue on [GitHub Issues](https://github.com/ha-china/blueprint-studio/issues) 🐛  
 - Provide as much detail as possible 📝  
 - Check existing issues first to avoid duplicates 🔍  
 
@@ -682,12 +682,12 @@ Thank you for being part of the Home Assistant community.
 ## ⭐ Star History
 If you find Blueprint Studio useful, please consider giving it a star on GitHub! 🌟
 
-[![Star History Chart](https://api.star-history.com/svg?repos=soulripper13/blueprint-studio&type=Date)](https://star-history.com/#soulripper13/blueprint-studio&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=ha-china/blueprint-studio&type=Date)](https://star-history.com/#ha-china/blueprint-studio&Date)
 
 ---
 
 <div align="center">
   <strong>Made with ❤️ for the Home Assistant Community</strong>  
   <br>  
-  <a href="https://github.com/soulripper13/blueprint-studio/blob/main/LICENSE">MIT License</a> • <a href="https://github.com/soulripper13/blueprint-studio/issues">Report Bug</a> • <a href="https://github.com/soulripper13/blueprint-studio">Update Changelog</a>
+  <a href="https://github.com/ha-china/blueprint-studio/blob/main/LICENSE">MIT License</a> • <a href="https://github.com/ha-china/blueprint-studio/issues">Report Bug</a> • <a href="https://github.com/ha-china/blueprint-studio">Update Changelog</a>
 </div>
