@@ -18,7 +18,7 @@
   <h3>Blueprint Studio for Home Assistant</h3>
   <p>A modern, feature-rich file editor with AI-powered assistance and full Git integration.</p>
   
-  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=soulripper13&repository=blueprint-studio&category=integration">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=ha-china&repository=blueprint-studio&category=integration">
     <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open in HACS">
   </a>
   <a href="https://my.home-assistant.io/redirect/config_flow_start/?domain=blueprint_studio">
@@ -255,7 +255,7 @@ This integration is best installed via the [Home Assistant Community Store (HACS
     * Add this repository's URL: `https://github.com/ha-china/blueprint-studio`
     * Select the category **Integration** and click **Add**.
  
-      [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store (HACS).](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=soulripper13&repository=blueprint-studio&category=integration)
+      [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store (HACS).](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ha-china&repository=blueprint-studio&category=integration)
   
       [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=blueprint_studio)
       
@@ -687,7 +687,9 @@ If you find Blueprint Studio useful, please consider giving it a star on GitHub!
 ---
 
 <div align="center">
-  <strong>Made with ❤️ for the Home Assistant Community</strong>  
+  <strong>Made with ❤️ for the Home Assistant Community by <a href="https://github.com/soulripper13">soulripper13</a></strong>  
   <br>  
+  Maintained by <a href="https://github.com/ha-china">HA China</a>
+  <br>
   <a href="https://github.com/ha-china/blueprint-studio/blob/main/LICENSE">MIT License</a> • <a href="https://github.com/ha-china/blueprint-studio/issues">Report Bug</a> • <a href="https://github.com/ha-china/blueprint-studio">Update Changelog</a>
 </div>

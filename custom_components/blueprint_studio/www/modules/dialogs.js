@@ -42,7 +42,7 @@ If applicable, add screenshots to help explain your problem.
   `.trim();
 
   const title = "[BUG] ";
-  const url = `https://github.com/soulripper13/blueprint-studio/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+  const url = `https://github.com/ha-china/blueprint-studio/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
   window.open(url, '_blank');
 }
 
@@ -79,7 +79,7 @@ Add any other context, links, or references about the feature request here.
   `.trim();
 
   const title = "[FEATURE] ";
-  const url = `https://github.com/soulripper13/blueprint-studio/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+  const url = `https://github.com/ha-china/blueprint-studio/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
   window.open(url, '_blank');
 }
 

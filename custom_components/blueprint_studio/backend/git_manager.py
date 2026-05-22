@@ -527,7 +527,7 @@ class GitManager:
             creds = self.data.get("github_credentials", {})
             if not creds or "token" not in creds: return json_message("Not authenticated with GitHub", status_code=401)
             token = base64.b64decode(creds["token"]).decode()
-            url = "https://api.github.com/user/starred/soulripper13/blueprint-studio"
+            url = "https://api.github.com/user/starred/ha-china/blueprint-studio"
             async with aiohttp.ClientSession() as session:
                 async with session.put(url, headers={"Authorization": f"Bearer {token}", "Content-Length": "0", "Accept": "application/vnd.github+json"}) as response:
                     if response.status == 204: return json_response({"success": True, "message": "Repository starred!"})

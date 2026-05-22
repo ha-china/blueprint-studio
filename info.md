@@ -18,6 +18,10 @@ A modern, feature-rich file editor for Home Assistant with a VS Code-like experi
 3. Add the integration from Settings → Devices & Services
 4. Find "Blueprint Studio" in your sidebar
 
+## Author
+
+Maintained by **[soulripper13](https://github.com/soulripper13)** (part of **[HA China](https://github.com/ha-china)**)
+
 ## Screenshots
 
-![Editor Interface](https://raw.githubusercontent.com/soulripper13/blueprint-studio/main/images/screenshot.png)
+![Editor Interface](https://raw.githubusercontent.com/ha-china/blueprint-studio/main/images/screenshot.png)

@@ -20,7 +20,7 @@ The Blueprint Studio team takes security bugs seriously. We appreciate your effo
 Instead, please report them via one of the following methods:
 
 1. **GitHub Security Advisories** (Preferred):
-   - Go to the [Security tab](https://github.com/soulripper13/blueprint-studio/security/advisories)
+   - Go to the [Security tab](https://github.com/ha-china/blueprint-studio/security/advisories)
    - Click "Report a vulnerability"
    - Fill out the form with details
 

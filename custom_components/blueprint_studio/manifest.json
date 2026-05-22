@@ -1,13 +1,13 @@
 {
   "domain": "blueprint_studio",
   "name": "Blueprint Studio",
-  "codeowners": ["@soulripper13"],
+  "codeowners": ["@ha-china", "@soulripper13"],
   "config_flow": true,
   "dependencies": ["http", "frontend"],
-  "documentation": "https://github.com/soulripper13/blueprint-studio",
+  "documentation": "https://github.com/ha-china/blueprint-studio",
   "integration_type": "service",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/soulripper13/blueprint-studio/issues",
+  "issue_tracker": "https://github.com/ha-china/blueprint-studio/issues",
   "requirements": ["paramiko>=3.0.0"],
   "version": "2.5.0"
 }
