@@ -8,14 +8,18 @@
 [![GitHub Stars](https://img.shields.io/github/stars/soulripper13/blueprint-studio?style=social)](https://github.com/soulripper13/blueprint-studio)
 [![GitHub Issues](https://img.shields.io/github/issues/soulripper13/blueprint-studio?style=flat-square)](https://github.com/soulripper13/blueprint-studio/issues)
 ![Downloads](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Downloads&suffix=%20installs&cacheSeconds=15600&style=for-the-badge&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.blueprint_studio.total)
-[![Support Development](https://img.shields.io/badge/Support-Development-FFDD00?style=for-the-badge&logo=paypal&logoColor=black)](#support-the-project)
+[![Support Development](https://img.shields.io/badge/Support-Development-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/soulripper13)
 
 <div align="center">
   <img src="https://dummyimage.com/800x60/0d1117/ffffff&text=Blueprint+Studio+-+Edit+Your+HA+Configs+Like+a+Pro" alt="Hero Banner">
   <br><br>
   <strong>A modern, feature-rich file editor for Home Assistant. Edit your YAML configuration files and other text-based files directly from the Home Assistant UI with a professional VS Code-like experience. Say goodbye to clunky SSH sessions and hello to seamless editing! ✨</strong> 
   <br><br> 
-<img src="icon.png" alt="Logo" style="width: 100px; height: auto;">
+	<img src="icon.png" alt="Logo" style="width: 100px; height: auto;">
+  <br><br>
+  <a href="https://ko-fi.com/soulripper13">
+    <img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" alt="Support Blueprint Studio on Ko-fi" width="220">
+  </a>
 </div>
 
 ---
@@ -646,6 +650,9 @@ This integration is developed and maintained in spare time and is provided free 
 If you find it useful and would like to support ongoing development, maintenance, and improvements, any contribution is appreciated — but never required ❤️
 
 ### Ways to Support
+
+* **Ko-fi**
+  [https://ko-fi.com/soulripper13](https://ko-fi.com/soulripper13)
 
 * **PayPal**
   [https://paypal.me/SKatoaroo](https://paypal.me/SKatoaroo)
