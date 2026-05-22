@@ -2,12 +2,18 @@
 
 [![HACS Default](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/default)
 [![GitHub Release](https://img.shields.io/github/release/soulripper13/blueprint-studio.svg?style=for-the-badge)](https://github.com/soulripper13/blueprint-studio/releases)
+[![GitHub License](https://img.shields.io/github/license/soulripper13/blueprint-studio.svg?style=for-the-badge)](LICENSE)
 [![GitHub Issues](https://img.shields.io/github/issues/soulripper13/blueprint-studio.svg?style=for-the-badge)](https://github.com/soulripper13/blueprint-studio/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/soulripper13/blueprint-studio?style=for-the-badge)](https://github.com/soulripper13/blueprint-studio)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.4.0%2B-blue.svg?style=for-the-badge)
+![Maintenance](https://img.shields.io/maintenance/yes/2026.svg?style=for-the-badge)
 ![Downloads](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Downloads&suffix=%20installs&cacheSeconds=15600&style=for-the-badge&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.blueprint_studio.total)
 [![Support Development](https://img.shields.io/badge/Support-Development-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/soulripper13)
 [![Support via PayPal](https://img.shields.io/badge/Support-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/SKatoaroo)
 
 <div align="center">
+  <img src="https://dummyimage.com/800x60/0d1117/ffffff&text=Blueprint+Studio+-+Edit+Your+HA+Configs+Like+a+Pro" alt="Hero Banner">
+  <br><br>
   <img src="icon.png" alt="Logo" width="120">
   <h3>Blueprint Studio for Home Assistant</h3>
   <p>A modern, feature-rich file editor with AI-powered assistance and full Git integration.</p>
