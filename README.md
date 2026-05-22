@@ -15,7 +15,7 @@
   <br><br>
   <strong>A modern, feature-rich file editor for Home Assistant. Edit your YAML configuration files and other text-based files directly from the Home Assistant UI with a professional VS Code-like experience. Say goodbye to clunky SSH sessions and hello to seamless editing! ✨</strong> 
   <br><br> 
-	<img src="icon.png" alt="Logo" style="width: 100px; height: auto;">
+  <img src="icon.png" alt="Logo" style="width: 100px; height: auto;">
   <br><br>
   <a href="https://ko-fi.com/soulripper13">
     <img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" alt="Support Blueprint Studio on Ko-fi" width="220">
