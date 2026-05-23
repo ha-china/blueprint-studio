@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-05-22
+
+- **Blueprint- Studio has been transferred to ha-china organisation**
+
 - **Mobile file tree indentation restored** — File and folder nesting in the mobile explorer now preserves depth-based indentation instead of flattening every row at the same left edge.
 
 - **Local file visibility now matches SFTP** — The local file tree no longer hides files based on extension, so uploaded Home Assistant assets such as fonts are visible immediately. Single-file uploads are no longer limited by the browser picker filter, and known binary assets including fonts, WASM, AVIF/APNG images, and SQLite sidecar files are handled as binary.
@@ -967,6 +971,7 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 
 
 ## Version History
+- **2.5.1** - Mobile File Tree Indentation, Allow all file types & Organisation Transfer
 - **2.5.0** - HA Agent AI Mode, Diff Viewer Rewrite & File Navigation Overhaul
 - **2.4.8** - Improved Diff Navigation, Stable Settings Sync & UI Fixes
 - **2.4.7** - Custom AI & Stability Improvements
@@ -999,7 +1004,8 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 - **1.2.0** - GitHub Integration, Pin Favorites & Auto-Refresh
 - **1.0.0** - First stable release
 
-[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/ha-china/blueprint-studio/releases/tag/v2.5.1
 [2.5.0]: https://github.com/ha-china/blueprint-studio/releases/tag/v2.5.0
 [2.4.8]: https://github.com/ha-china/blueprint-studio/releases/tag/v2.4.8
 [2.4.7]: https://github.com/ha-china/blueprint-studio/releases/tag/v2.4.7
