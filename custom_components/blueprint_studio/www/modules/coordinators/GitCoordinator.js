@@ -8,6 +8,7 @@ import { state, elements } from '../state.js';
 import { eventBus } from '../event-bus.js';
 import { showModal } from '../ui.js';
 import { saveSettings } from '../settings.js';
+import { renderFileTree } from '../file-tree.js';
 import {
     gitPull as gitPullImpl,
     gitPush as gitPushImpl,
@@ -488,6 +489,7 @@ export function initGitCoordinator(callbacks) {
     eventBus.on("git:refresh", () => {
         if (functions.updateGitPanel) functions.updateGitPanel();
         if (functions.updateGiteaPanel) functions.updateGiteaPanel();
+        renderFileTree();
     });
 
     // Toggle git panel collapse via keyboard shortcut (Ctrl+Shift+G)

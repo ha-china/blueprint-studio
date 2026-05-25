@@ -12,7 +12,9 @@ import { fetchWithAuth } from '../api.js';
 import { 
     renderFileTree as renderFileTreeImpl,
     loadDirectory as loadDirectoryImpl,
-    buildFileTree as buildFileTreeImpl
+    buildFileTree as buildFileTreeImpl,
+    startInlineExplorerCreate,
+    startInlineExplorerRename
 } from '../file-tree.js';
 import { showToast, setButtonLoading, showConfirmDialog } from '../ui.js';
 
@@ -38,10 +40,7 @@ import {
     deleteItem as deleteItemImpl
 } from '../file-operations.js';
 import {
-    promptNewFile as promptNewFileImpl,
-    promptNewFolder as promptNewFolderImpl,
     promptNewBlueprint as promptNewBlueprintImpl,
-    promptRename as promptRenameImpl,
     promptCopy as promptCopyImpl,
     promptMove as promptMoveImpl,
     duplicateItem as duplicateItemImpl,
@@ -577,11 +576,11 @@ export function initFileCoordinator(callbacks) {
     });
 
     eventBus.on("file:new", (data) => {
-        promptNewFileImpl(data?.path);
+        startInlineExplorerCreate("file", data?.path);
     });
 
     eventBus.on("folder:new", (data) => {
-        promptNewFolderImpl(data?.path);
+        startInlineExplorerCreate("folder", data?.path);
     });
 
     eventBus.on("blueprint:new", (data) => {
@@ -646,7 +645,7 @@ export function initFileCoordinator(callbacks) {
     });
 
     eventBus.on("file:prompt-rename", (data) => {
-        promptRenameImpl(data.path, data.isFolder);
+        startInlineExplorerRename(data.path, data.isFolder);
     });
 
     eventBus.on("file:prompt-move", (data) => {

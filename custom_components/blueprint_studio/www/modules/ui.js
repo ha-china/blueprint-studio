@@ -513,6 +513,11 @@ export function initElements() {
     elements.explorerBreadcrumb = document.getElementById("explorer-breadcrumb");
     elements.breadcrumbCopy = document.getElementById("breadcrumb-copy");
     elements.fileSearch = document.getElementById("file-search");
+    elements.fileSearchClear = document.getElementById("file-search-clear");
+    elements.fileSearchCount = document.getElementById("file-search-count");
+    elements.fileFilter = document.getElementById("file-filter");
+    elements.fileFilterIcon = document.getElementById("file-filter-icon");
+    elements.btnFilenameSearch = document.getElementById("btn-filename-search");
     elements.btnContentSearch = document.getElementById("btn-content-search");
     elements.toastContainer = document.getElementById("toast-container");
     elements.sidebar = document.getElementById("sidebar");

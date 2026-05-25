@@ -9,7 +9,7 @@ import { eventBus } from '../event-bus.js';
 import { triggerUpload, triggerFolderUpload, downloadFolder, downloadFileByPath, handleFileUpload, handleFolderUpload } from '../downloads-uploads.js';
 import { setThemePreset } from '../ui.js';
 import { saveSettings, updateShowHiddenButton } from '../settings.js';
-import { renderFileTree, debouncedRenderFileTree, cancelPendingSearch } from '../file-tree.js';
+import { renderFileTree, debouncedRenderFileTree, cancelPendingSearch, updateExplorerSearchUI, updateExplorerFilterIcon } from '../file-tree.js';
 import { updateSearchHighlights, updateMatchStatus, doReplace, doReplaceAll, doFind, openSearchWidget } from '../search.js';
 import { downloadCurrentFile } from '../downloads-uploads.js';
 import { updateToolbarState } from '../toolbar.js';
@@ -1594,6 +1594,16 @@ if (elements.breadcrumbCopy) {
     }
 
     // File search
+    if (elements.fileFilter) {
+        elements.fileFilter.value = state.fileTreeFilter || "all";
+        elements.fileFilter.addEventListener("change", () => {
+            state.fileTreeFilter = elements.fileFilter.value || "all";
+            saveSettings();
+            updateExplorerFilterIcon();
+            renderFileTree();
+        });
+    }
+
     if (elements.fileSearch) {
         elements.fileSearch.addEventListener("input", (e) => {
             state.searchQuery = e.target.value;
@@ -1605,6 +1615,8 @@ if (elements.breadcrumbCopy) {
                 renderFileTree();
                 return;
             }
+
+            updateExplorerSearchUI();
 
             // In lazy loading mode, always use recursive search
             if (state.lazyLoadingEnabled) {
@@ -1626,47 +1638,52 @@ if (elements.breadcrumbCopy) {
         });
     }
 
-    // Content Search Toggle
-    if (elements.btnContentSearch) {
-        // Update UI to match current state (from settings)
-        if (state.contentSearchEnabled) {
-            elements.btnContentSearch.style.background = "var(--accent-color)";
-            elements.btnContentSearch.style.color = "white";
-            elements.btnContentSearch.style.borderColor = "var(--accent-color)";
-            elements.fileSearch.placeholder = "Search all files...";
+    const rerunExplorerSearch = () => {
+        if (!state.searchQuery.trim()) {
+            state.contentSearchResults = null;
+            cancelPendingSearch();
+            renderFileTree();
+            return;
         }
 
-        elements.btnContentSearch.addEventListener("click", () => {
-            state.contentSearchEnabled = !state.contentSearchEnabled;
+        if (state.contentSearchEnabled) {
+            eventBus.emit('search:content-debounced');
+        } else if (state.lazyLoadingEnabled) {
+            eventBus.emit('search:filename-debounced');
+        } else {
+            state.contentSearchResults = null;
+            renderFileTree();
+        }
+    };
 
-            // UI Toggle
-            if (state.contentSearchEnabled) {
-                elements.btnContentSearch.style.background = "var(--accent-color)";
-                elements.btnContentSearch.style.color = "white";
-                elements.btnContentSearch.style.borderColor = "var(--accent-color)";
-                elements.fileSearch.placeholder = "Search all files...";
-                // Re-run search with content mode
-                if (state.searchQuery) {
-                    eventBus.emit('search:content-debounced');
-                }
-            } else {
-                elements.btnContentSearch.style.background = "var(--bg-tertiary)";
-                elements.btnContentSearch.style.color = "var(--text-secondary)";
-                elements.btnContentSearch.style.borderColor = "var(--border-color)";
-                elements.fileSearch.placeholder = "Search all files...";
-                // Re-run search with filename mode (or clear if lazy loading disabled)
-                if (state.searchQuery) {
-                    if (state.lazyLoadingEnabled) {
-                        eventBus.emit('search:filename-debounced');
-                    } else {
-                        state.contentSearchResults = null;
-                        renderFileTree();
-                    }
-                } else {
-                    state.contentSearchResults = null;
-                    renderFileTree();
-                }
+    if (elements.fileSearchClear) {
+        elements.fileSearchClear.addEventListener("click", () => {
+            state.searchQuery = "";
+            if (elements.fileSearch) {
+                elements.fileSearch.value = "";
+                elements.fileSearch.focus();
             }
+            state.contentSearchResults = null;
+            cancelPendingSearch();
+            renderFileTree();
         });
     }
+
+    if (elements.btnFilenameSearch) {
+        elements.btnFilenameSearch.addEventListener("click", () => {
+            if (!state.contentSearchEnabled) return;
+            state.contentSearchEnabled = false;
+            rerunExplorerSearch();
+        });
+    }
+
+    if (elements.btnContentSearch) {
+        elements.btnContentSearch.addEventListener("click", () => {
+            if (state.contentSearchEnabled) return;
+            state.contentSearchEnabled = true;
+            rerunExplorerSearch();
+        });
+    }
+
+    renderFileTree();
 }

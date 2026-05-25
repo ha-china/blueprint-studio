@@ -102,6 +102,23 @@ export function refreshAllUIStrings() {
   if (elements.btnShowHidden) {
     elements.btnShowHidden.title = state.showHidden ? t("toolbar.hide_hidden") : t("toolbar.show_hidden");
   }
+
+  if (elements.fileFilter) {
+    elements.fileFilter.title = t("sidebar.filter_files");
+    const fileFilterControl = elements.fileFilter.closest(".file-filter-control");
+    if (fileFilterControl) fileFilterControl.title = t("sidebar.filter_files");
+    elements.fileFilter.value = state.fileTreeFilter || "all";
+    const labels = {
+      all: t("filter.all"),
+      yaml: t("filter.yaml"),
+      python: t("filter.python"),
+      images: t("filter.images"),
+      modified: t("filter.modified"),
+    };
+    Array.from(elements.fileFilter.options).forEach((option) => {
+      if (labels[option.value]) option.textContent = labels[option.value];
+    });
+  }
   
   if (elements.btnToggleSelect) elements.btnToggleSelect.title = t("toolbar.select_files");
   if (elements.btnCollapseAllFolders) elements.btnCollapseAllFolders.title = t("toolbar.collapse_all");
@@ -180,6 +197,8 @@ export function refreshAllUIStrings() {
   if (btnCloseSidebar) btnCloseSidebar.title = t("sidebar.close");
   
   if (elements.fileSearch) elements.fileSearch.placeholder = t("sidebar.search_files");
+  if (elements.fileSearchClear) elements.fileSearchClear.title = t("sidebar.clear_search");
+  if (elements.btnFilenameSearch) elements.btnFilenameSearch.title = t("sidebar.filename_search");
   if (elements.btnContentSearch) elements.btnContentSearch.title = t("sidebar.content_search");
   
   const favHeader = document.querySelector("#favorites-panel .favorites-header");

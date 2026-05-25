@@ -292,11 +292,34 @@
 
       <div class="sidebar-content">
         <div id="view-explorer" class="sidebar-view">
-      <div class="search-container" style="display: flex; gap: 8px;">
-        <input type="text" class="search-input" id="file-search" placeholder="Search all files..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex: 1;">
-        <button id="btn-content-search" title="Match File Content" style="width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer;">
-            <span class="material-icons" style="font-size: 18px;">text_snippet</span>
-        </button>
+      <div class="search-container explorer-search-container">
+        <div class="explorer-search-row">
+          <div class="explorer-search-input-wrap">
+            <input type="text" class="search-input" id="file-search" placeholder="Search all files..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <span class="explorer-search-count" id="file-search-count" aria-live="polite"></span>
+            <button class="explorer-search-clear" id="file-search-clear" title="Clear search" aria-label="Clear search" type="button">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+          <label class="file-filter-control" title="Filter files">
+            <span class="material-icons file-filter-icon" id="file-filter-icon">filter_list</span>
+            <select class="file-filter-select" id="file-filter" aria-label="Filter files">
+              <option value="all">All</option>
+              <option value="yaml">YAML</option>
+              <option value="python">Python</option>
+              <option value="images">Images</option>
+              <option value="modified">Modified</option>
+            </select>
+          </label>
+          <div class="explorer-search-modes" role="group" aria-label="Search mode">
+            <button class="explorer-search-mode active" id="btn-filename-search" data-search-mode="filename" type="button" title="Match File Names">
+              <span class="material-icons">drive_file_rename_outline</span>
+            </button>
+            <button class="explorer-search-mode" id="btn-content-search" data-search-mode="content" type="button" title="Match File Content">
+              <span class="material-icons">text_snippet</span>
+            </button>
+          </div>
+        </div>
       </div>
       <div class="selection-toolbar" id="selection-toolbar" style="display: none;">
         <span class="selection-count" id="selection-count">0 selected</span>

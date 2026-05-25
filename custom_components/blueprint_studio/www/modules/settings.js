@@ -155,6 +155,7 @@ export async function loadSettings() {
     state.autoSaveDelay = parseInt(settings.autoSaveDelay) || 1000;
     state.fileTreeCompact = settings.fileTreeCompact || false;
     state.fileTreeShowIcons = settings.fileTreeShowIcons !== false; // default true
+    state.fileTreeFilter = settings.fileTreeFilter || "all";
     state.treeCollapsableMode = settings.treeCollapsableMode || false;
     // Apply tree mode to lazyLoadingEnabled
     // state.lazyLoadingEnabled = !state.treeCollapsableMode;
@@ -381,6 +382,7 @@ export async function saveSettings() {
       autoSaveDelay: state.autoSaveDelay,
       fileTreeCompact: state.fileTreeCompact,
       fileTreeShowIcons: state.fileTreeShowIcons,
+      fileTreeFilter: state.fileTreeFilter,
       treeCollapsableMode: state.treeCollapsableMode,
       expandedFolders: Array.from(state.expandedFolders),
       recentFilesLimit: state.recentFilesLimit,

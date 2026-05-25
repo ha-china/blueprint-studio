@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Donation support added to the toolbar** — Added a professional Support Development toolbar button that opens a donation modal with Ko-fi, PayPal, Alipay QR, Bitcoin, and Solana support options. The README support section now lists the same options.
+
+- **Inline file explorer create and rename** — New File, New Folder, and Rename now happen directly inside the file explorer with inline inputs, Enter/check to confirm, and Escape/close/blur to cancel, reducing modal friction for common file management tasks.
+
+- **File explorer filter presets** — Added a compact icon-based explorer filter for All, YAML, Python, Images, and Modified files. The selected filter is saved with the rest of the UI settings and applies across browsing and search results.
+
+- **File explorer search UI polish** — Explorer search now fits in a compact single-row toolbar with filename/content icon mode buttons, an inline clear button, visible result counts, highlighted filename matches, and a no-results state.
+
+- **Git status badges in the file explorer** — Files now show compact Git status badges for modified, untracked, added, conflict, and staged states when GitHub integration is enabled.
+
 ## [2.5.1] - 2026-05-22
 
 - **Blueprint- Studio has been transferred to ha-china organisation**

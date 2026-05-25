@@ -4,7 +4,7 @@ import { enableLongPressContextMenu } from './utils.js';
 /** FILE-TREE.JS | Purpose: * Handles file tree rendering, folder expansion/collapse, drag & drop, */
 import { state, elements, gitState } from './state.js';
 import { fetchWithAuth, getAuthToken } from './api.js';
-import { API_BASE, STREAM_BASE } from './constants.js';
+import { API_BASE, STREAM_BASE, IMAGE_EXTENSIONS } from './constants.js';
 import {
   showToast,
   showGlobalLoading,
@@ -28,6 +28,68 @@ export function cancelPendingSearch() {
     clearTimeout(contentSearchTimer);
     contentSearchTimer = null;
   }
+  state.explorerSearchLoading = false;
+  updateExplorerSearchUI();
+}
+
+export function updateExplorerSearchUI(count = null) {
+  const query = (state.searchQuery || "").trim();
+  const hasQuery = query.length > 0;
+
+  if (elements.fileSearch) {
+    elements.fileSearch.style.opacity = state.explorerSearchLoading ? "0.7" : "1";
+  }
+
+  if (elements.fileSearchClear) {
+    elements.fileSearchClear.classList.toggle("visible", hasQuery);
+  }
+
+  if (elements.btnFilenameSearch) {
+    elements.btnFilenameSearch.classList.toggle("active", !state.contentSearchEnabled);
+    elements.btnFilenameSearch.setAttribute("aria-pressed", state.contentSearchEnabled ? "false" : "true");
+  }
+
+  if (elements.btnContentSearch) {
+    elements.btnContentSearch.classList.toggle("active", state.contentSearchEnabled);
+    elements.btnContentSearch.setAttribute("aria-pressed", state.contentSearchEnabled ? "true" : "false");
+  }
+
+  updateExplorerFilterIcon();
+
+  if (!elements.fileSearchCount) return;
+
+  if (!hasQuery) {
+    elements.fileSearchCount.textContent = "";
+    elements.fileSearchCount.title = "";
+    return;
+  }
+
+  if (state.explorerSearchLoading) {
+    elements.fileSearchCount.textContent = "...";
+    elements.fileSearchCount.title = t("sidebar.searching");
+    return;
+  }
+
+  if (typeof count === "number") {
+    elements.fileSearchCount.textContent = String(count);
+    elements.fileSearchCount.title = t("sidebar.search_results_count", { count });
+  }
+}
+
+export function updateExplorerFilterIcon() {
+  if (!elements.fileFilterIcon) return;
+
+  const filter = state.fileTreeFilter || "all";
+  const icons = {
+    all: "filter_list",
+    yaml: "data_object",
+    python: "code",
+    images: "image",
+    modified: "edit",
+  };
+
+  elements.fileFilterIcon.textContent = icons[filter] || "filter_list";
+  elements.fileFilterIcon.classList.toggle("active", filter !== "all");
 }
 
 /**
@@ -47,9 +109,8 @@ export function debouncedContentSearch() {
   if (contentSearchTimer) clearTimeout(contentSearchTimer);
 
   // Show loading state
-  if (elements.fileSearch) {
-    elements.fileSearch.style.opacity = "0.7";
-  }
+  state.explorerSearchLoading = true;
+  updateExplorerSearchUI();
 
   contentSearchTimer = setTimeout(() => {
     performContentSearch();
@@ -63,9 +124,8 @@ export function debouncedFilenameSearch() {
   if (contentSearchTimer) clearTimeout(contentSearchTimer);
 
   // Show loading state
-  if (elements.fileSearch) {
-    elements.fileSearch.style.opacity = "0.7";
-  }
+  state.explorerSearchLoading = true;
+  updateExplorerSearchUI();
 
   contentSearchTimer = setTimeout(() => {
     performFilenameSearch();
@@ -81,7 +141,8 @@ export async function performContentSearch() {
 
   if (!query) {
     state.contentSearchResults = null;
-    if (elements.fileSearch) elements.fileSearch.style.opacity = "1";
+    state.explorerSearchLoading = false;
+    updateExplorerSearchUI();
     renderFileTree();
     return;
   }
@@ -149,9 +210,11 @@ export async function performContentSearch() {
       state.contentSearchResults = new Set();
     }
   } finally {
-    if (elements.fileSearch) elements.fileSearch.style.opacity = "1";
+    state.explorerSearchLoading = false;
     if (state.searchQuery.trim() === query) {
       renderFileTree();
+    } else {
+      updateExplorerSearchUI();
     }
   }
 }
@@ -164,7 +227,8 @@ export async function performFilenameSearch() {
 
   if (!query) {
     state.contentSearchResults = null;
-    if (elements.fileSearch) elements.fileSearch.style.opacity = "1";
+    state.explorerSearchLoading = false;
+    updateExplorerSearchUI();
     renderFileTree();
     return;
   }
@@ -188,10 +252,12 @@ export async function performFilenameSearch() {
     console.error("Filename search failed", e);
     state.contentSearchResults = new Set();
   } finally {
-    if (elements.fileSearch) elements.fileSearch.style.opacity = "1";
+    state.explorerSearchLoading = false;
     // Only render if query still matches (user hasn't cleared)
     if (state.searchQuery.trim().toLowerCase() === query) {
       renderFileTree();
+    } else {
+      updateExplorerSearchUI();
     }
   }
 }
@@ -243,6 +309,8 @@ export function renderFileTree() {
         return;
     }
 
+  let renderedSearchCount = null;
+
   // Clear current tree
   elements.fileTree.innerHTML = "";
 
@@ -254,8 +322,9 @@ export function renderFileTree() {
     // Combine folders and files for search
     const allItems = [...state.folders, ...state.files];
     const filtered = allItems.filter(item => 
-      item.name.toLowerCase().includes(query) || 
-      item.path.toLowerCase().includes(query)
+      (item.name.toLowerCase().includes(query) ||
+      item.path.toLowerCase().includes(query)) &&
+      (item.type === "folder" || filePassesExplorerFilter(item.path))
     );
 
     filtered.forEach(item => {
@@ -294,6 +363,10 @@ export function renderFileTree() {
     });
 
     elements.fileTree.appendChild(fragment);
+    renderedSearchCount = filtered.length;
+    renderExplorerSearchEmptyState(renderedSearchCount);
+    updateExplorerSearchUI(renderedSearchCount);
+    focusInlineExplorerInput();
     updateToggleAllButton();
     return;
   }
@@ -303,8 +376,11 @@ export function renderFileTree() {
   if (state.contentSearchResults && (state.contentSearchEnabled || state.lazyLoadingEnabled)) {
     const fragment = document.createDocumentFragment();
     const searchResults = Array.from(state.contentSearchResults).sort();
+    let visibleResultCount = 0;
 
     searchResults.forEach((filePath) => {
+      if (!filePassesExplorerFilter(filePath)) return;
+      visibleResultCount += 1;
       const fileName = filePath.split("/").pop();
       const item = createTreeItem(fileName, 0, false, false, filePath);
 
@@ -334,6 +410,10 @@ export function renderFileTree() {
     });
 
     elements.fileTree.appendChild(fragment);
+    renderedSearchCount = visibleResultCount;
+    renderExplorerSearchEmptyState(renderedSearchCount);
+    updateExplorerSearchUI(renderedSearchCount);
+    focusInlineExplorerInput();
     updateToggleAllButton();
     return; // Exit early - don't show folder navigation
   }
@@ -345,6 +425,12 @@ export function renderFileTree() {
       renderTreeLevel(state.fileTree, fragment, 0);
     }
     elements.fileTree.appendChild(fragment);
+    if (state.searchQuery) {
+      renderedSearchCount = elements.fileTree.querySelectorAll(".tree-item[data-path]").length;
+      renderExplorerSearchEmptyState(renderedSearchCount);
+    }
+    updateExplorerSearchUI(renderedSearchCount);
+    focusInlineExplorerInput();
     updateToggleAllButton();
     return;
   }
@@ -392,6 +478,10 @@ export function renderFileTree() {
     itemsToRender.push({ name: "..", path: parentPath, isFolder: true, isBack: true });
   }
 
+  if (isInlineCreateForLevel(currentPath)) {
+    itemsToRender.push({ isInlineEdit: true, inlineEdit: state.inlineExplorerEdit });
+  }
+
   // 2. Add folders
   currentData.folders.forEach(f => {
     if (!query || f.name.toLowerCase().includes(query)) {
@@ -402,12 +492,12 @@ export function renderFileTree() {
   // 3. Add files
   currentData.files.forEach(f => {
     let match = true;
-    if (state.contentSearchResults && state.contentSearchResults.size > 0) {
+    if (state.contentSearchResults) {
       match = state.contentSearchResults.has(f.path);
     } else if (query) {
       match = f.name.toLowerCase().includes(query);
     }
-    if (match) {
+    if (match && filePassesExplorerFilter(f.path)) {
       itemsToRender.push({ ...f, isFolder: false });
     }
   });
@@ -422,6 +512,14 @@ export function renderFileTree() {
     });
     elements.fileTree.appendChild(fragment);
   }
+
+  renderedSearchCount = state.searchQuery
+    ? itemsToRender.filter((item) => !item.isBack && !item.isInlineEdit).length
+    : null;
+  renderExplorerSearchEmptyState(renderedSearchCount);
+  updateExplorerSearchUI(renderedSearchCount);
+
+  focusInlineExplorerInput();
 }
 
 /**
@@ -449,6 +547,10 @@ function _renderIncremental(items, startIndex) {
  * Helper to create a tree item element from a metadata object
  */
 function _createTreeItemFromMeta(itemMeta) {
+  if (itemMeta.isInlineEdit) {
+    return createInlineExplorerEditItem(itemMeta.inlineEdit, 0);
+  }
+
   const { name, path, isFolder, isBack, isSymlink, symlinkTarget, size } = itemMeta;
   
   const treeItem = createTreeItem(name, 0, isFolder, false, path, false,
@@ -524,6 +626,11 @@ export function renderTreeLevel(tree, container, depth) {
 
   const query = state.searchQuery.toLowerCase();
   const fragment = document.createDocumentFragment();
+  const levelPath = tree._path || "";
+
+  if (!query && isInlineCreateForLevel(levelPath)) {
+    fragment.appendChild(createInlineExplorerEditItem(state.inlineExplorerEdit, depth));
+  }
 
   // Render folders
   folders.forEach((folderName) => {
@@ -584,7 +691,7 @@ export function renderTreeLevel(tree, container, depth) {
       // Only render children if expanded and not currently loading
       const childFolders = Object.keys(folderData).filter(k => !k.startsWith('_'));
       const childFiles = folderData._files || [];
-      if (childFolders.length === 0 && childFiles.length === 0) {
+      if (childFolders.length === 0 && childFiles.length === 0 && !isInlineCreateForLevel(folderPath)) {
         const emptyItem = document.createElement('div');
         emptyItem.className = 'tree-item';
         emptyItem.style.setProperty('--depth', depth + 1);
@@ -611,11 +718,13 @@ export function renderTreeLevel(tree, container, depth) {
   // Render files
   files.forEach((file) => {
     // If search results exist (from either content or filename search), filter by them
-    if (state.contentSearchResults && state.contentSearchResults.size > 0) {
+    if (state.contentSearchResults) {
       if (!state.contentSearchResults.has(file.path)) return;
     } else if (query && !file.name.toLowerCase().includes(query)) {
       return;
     }
+
+    if (!filePassesExplorerFilter(file.path)) return;
 
     const fileMeta = state.files.find(f => f.path === file.path);
     const item = createTreeItem(file.name, depth, false, false, file.path, false,
@@ -765,7 +874,7 @@ export async function handleFileDrop(sourcePath, targetFolder) {
  */
 export function folderMatchesSearch(folder, query) {
   // Search results mode (content or filename search)
-  if (state.contentSearchResults && state.contentSearchResults.size > 0) {
+  if (state.contentSearchResults) {
     if (folder._files) {
       if (folder._files.some(f => state.contentSearchResults.has(f.path))) return true;
     }
@@ -795,10 +904,12 @@ export function folderMatchesSearch(folder, query) {
  * Create a tree item element (file or folder)
  */
 export function createTreeItem(name, depth, isFolder, isExpanded, itemPath = null, isLoading = false, symlinkTarget = null) {
+  const inlineRename = state.inlineExplorerEdit?.mode === "rename" &&
+    state.inlineExplorerEdit.path === itemPath;
   const item = document.createElement("div");
-  item.className = "tree-item";
+  item.className = inlineRename ? "tree-item inline-edit-item" : "tree-item";
   item.style.setProperty("--depth", depth);
-  item.draggable = true;
+  item.draggable = !inlineRename;
   item.dataset.path = itemPath;
   item.dataset.isFolder = isFolder ? "true" : "false";
 
@@ -847,8 +958,13 @@ export function createTreeItem(name, depth, isFolder, isExpanded, itemPath = nul
 
   const label = document.createElement("span");
   label.className = "tree-name";
-  label.textContent = name;
-  item.appendChild(label);
+  if (inlineRename) {
+    item.appendChild(createInlineExplorerInput(state.inlineExplorerEdit));
+    return item;
+  } else {
+    applySearchHighlight(label, name);
+    item.appendChild(label);
+  }
 
   // Check if this is a symlink (passed directly from renderFileTree)
   // Symlink indicator
@@ -868,6 +984,17 @@ export function createTreeItem(name, depth, isFolder, isExpanded, itemPath = nul
       symlinkIcon.title = `Symlink → ${symlinkTarget}`;
     }
     item.appendChild(symlinkIcon);
+  }
+
+  if (!isFolder && itemPath) {
+    const gitBadge = getExplorerGitStatusBadge(itemPath);
+    if (gitBadge) {
+      const badge = document.createElement("span");
+      badge.className = `tree-git-badge ${gitBadge.status}`;
+      badge.textContent = gitBadge.label;
+      badge.title = gitBadge.title;
+      item.appendChild(badge);
+    }
   }
 
   // File Size (if available)
@@ -938,6 +1065,342 @@ export function createTreeItem(name, depth, isFolder, isExpanded, itemPath = nul
   });
 
   return item;
+}
+
+function getExplorerGitStatusBadge(path) {
+  if (!state.gitIntegrationEnabled) return null;
+  if (!path) return null;
+
+  if ((gitState.conflictFiles || []).includes(path)) {
+    return { status: "conflict", label: "!", title: t("sidebar.conflict") };
+  }
+
+  if ((gitState.files.staged || []).includes(path)) {
+    return { status: "staged", label: "S", title: t("sidebar.staged") };
+  }
+
+  if ((gitState.files.added || []).includes(path)) {
+    return { status: "added", label: "A", title: t("sidebar.added") };
+  }
+
+  if ((gitState.files.untracked || []).includes(path)) {
+    return { status: "untracked", label: "U", title: t("sidebar.untracked") };
+  }
+
+  if ((gitState.files.modified || []).includes(path)) {
+    return { status: "modified", label: "M", title: t("sidebar.modified") };
+  }
+
+  if (state.openTabs.some((tab) => tab.path === path && tab.modified)) {
+    return { status: "unsaved", label: "*", title: t("sidebar.unsaved") };
+  }
+
+  return null;
+}
+
+function isInlineCreateForLevel(levelPath) {
+  return state.inlineExplorerEdit?.mode === "create" &&
+    (state.inlineExplorerEdit.parentPath || "") === (levelPath || "");
+}
+
+function createInlineExplorerEditItem(edit, depth) {
+  const item = document.createElement("div");
+  item.className = "tree-item inline-edit-item";
+  item.style.setProperty("--depth", depth);
+  item.dataset.isFolder = edit.type === "folder" ? "true" : "false";
+
+  if (state.treeCollapsableMode) {
+    const spacer = document.createElement("div");
+    spacer.className = "tree-chevron hidden";
+    item.appendChild(spacer);
+  }
+
+  const icon = document.createElement("div");
+  icon.className = `tree-icon ${edit.type === "folder" ? "folder" : "file-yaml"}`;
+  icon.innerHTML = `<span class="material-icons">${edit.type === "folder" ? "create_new_folder" : "note_add"}</span>`;
+  item.appendChild(icon);
+  item.appendChild(createInlineExplorerInput(edit));
+
+  return item;
+}
+
+function createInlineExplorerInput(edit) {
+  const wrap = document.createElement("div");
+  wrap.className = "inline-edit-control";
+  wrap.addEventListener("click", (e) => e.stopPropagation());
+  wrap.addEventListener("dblclick", (e) => e.stopPropagation());
+  wrap.addEventListener("contextmenu", (e) => e.stopPropagation());
+
+  const input = document.createElement("input");
+  input.className = "inline-edit-input";
+  input.value = edit.value || "";
+  input.placeholder = edit.type === "folder" ? "folder_name" : "filename.yaml";
+  input.setAttribute("aria-label", edit.mode === "rename" ? "Rename item" : "Create item");
+  wrap.appendChild(input);
+
+  const confirmBtn = document.createElement("button");
+  confirmBtn.className = "inline-edit-btn";
+  confirmBtn.title = t("modal.confirm_button");
+  confirmBtn.innerHTML = '<span class="material-icons">check</span>';
+  confirmBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    submitInlineExplorerEdit();
+  });
+  wrap.appendChild(confirmBtn);
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "inline-edit-btn";
+  cancelBtn.title = t("modal.cancel_button");
+  cancelBtn.innerHTML = '<span class="material-icons">close</span>';
+  cancelBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    cancelInlineExplorerEdit();
+  });
+  wrap.appendChild(cancelBtn);
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      submitInlineExplorerEdit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      cancelInlineExplorerEdit();
+    }
+  });
+
+  input.addEventListener("blur", () => {
+    window.setTimeout(() => {
+      if (!wrap.contains(document.activeElement) && state.inlineExplorerEdit === edit) {
+        cancelInlineExplorerEdit();
+      }
+    }, 120);
+  });
+
+  return wrap;
+}
+
+function focusInlineExplorerInput() {
+  if (!state.inlineExplorerEdit) return;
+  window.setTimeout(() => {
+    const input = elements.fileTree?.querySelector(".inline-edit-input");
+    if (!input) return;
+    input.focus();
+    const value = input.value || "";
+    const dotIndex = state.inlineExplorerEdit.type === "file" ? value.lastIndexOf(".") : -1;
+    const end = dotIndex > 0 ? dotIndex : value.length;
+    input.setSelectionRange(0, end);
+  }, 0);
+}
+
+function normalizeExplorerName(name, type) {
+  const clean = (name || "").trim();
+  if (!clean || clean.includes("/") || clean.includes("\\")) return "";
+  if (type === "file" && !clean.includes(".")) return `${clean}.yaml`;
+  return clean;
+}
+
+function buildChildPath(parentPath, name) {
+  return parentPath ? `${parentPath}/${name}` : name;
+}
+
+function explorerItemExists(path, isFolder) {
+  const parentPath = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
+  const dirData = state.loadedDirectories?.get(parentPath);
+  if (dirData) {
+    const items = isFolder ? dirData.folders : dirData.files;
+    if (items.some((item) => item.path === path)) return true;
+  }
+
+  const source = isFolder ? state.folders : state.files;
+  return source.some((item) => item.path === path);
+}
+
+function filePassesExplorerFilter(path) {
+  const filter = state.fileTreeFilter || "all";
+  if (filter === "all") return true;
+
+  const ext = (path.split(".").pop() || "").toLowerCase();
+  if (filter === "yaml") return ext === "yaml" || ext === "yml";
+  if (filter === "python") return ext === "py";
+  if (filter === "images") return IMAGE_EXTENSIONS.has(ext);
+  if (filter === "modified") {
+    return gitState.files.modified.includes(path) ||
+      gitState.files.added.includes(path) ||
+      gitState.files.untracked.includes(path) ||
+      gitState.files.staged.includes(path) ||
+      state.openTabs.some((tab) => tab.path === path && tab.modified);
+  }
+
+  return true;
+}
+
+function renderExplorerSearchEmptyState(count) {
+  if (!state.searchQuery || count !== 0 || state.explorerSearchLoading || !elements.fileTree) return;
+
+  const emptyItem = document.createElement("div");
+  emptyItem.className = "explorer-search-empty";
+  emptyItem.innerHTML = `
+    <span class="material-icons">search_off</span>
+    <span>${t("sidebar.search_no_results")}</span>
+  `;
+  elements.fileTree.appendChild(emptyItem);
+}
+
+function applySearchHighlight(label, name) {
+  const query = (state.searchQuery || "").trim();
+  if (!query) {
+    label.textContent = name;
+    return;
+  }
+
+  const lowerName = name.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const index = lowerName.indexOf(lowerQuery);
+
+  if (index === -1) {
+    label.textContent = name;
+    return;
+  }
+
+  label.textContent = "";
+  label.appendChild(document.createTextNode(name.slice(0, index)));
+
+  const mark = document.createElement("mark");
+  mark.className = "tree-search-highlight";
+  mark.textContent = name.slice(index, index + query.length);
+  label.appendChild(mark);
+
+  label.appendChild(document.createTextNode(name.slice(index + query.length)));
+}
+
+export function startInlineExplorerCreate(type, parentPath = null) {
+  const targetParent = parentPath ?? (state.lazyLoadingEnabled && !state.treeCollapsableMode
+    ? (state.currentNavigationPath || "")
+    : (state.currentFolderPath || ""));
+
+  state.searchQuery = "";
+  state.contentSearchResults = null;
+  if (elements.fileSearch) elements.fileSearch.value = "";
+
+  if (state.treeCollapsableMode && targetParent) {
+    expandPathAncestors(targetParent);
+    state.currentFolderPath = targetParent;
+  } else if (!state.treeCollapsableMode) {
+    state.currentNavigationPath = targetParent;
+    if (!state.loadedDirectories.has(targetParent) && !state.loadingDirectories.has(targetParent)) {
+      loadDirectory(targetParent);
+    }
+  }
+
+  state.inlineExplorerEdit = {
+    mode: "create",
+    type,
+    parentPath: targetParent,
+    value: type === "folder" ? "new_folder" : "new_file.yaml",
+  };
+
+  renderFileTree();
+}
+
+export function startInlineExplorerRename(path, isFolder) {
+  if (!path) return;
+
+  const parentPath = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
+  if (state.treeCollapsableMode && parentPath) {
+    expandPathAncestors(parentPath);
+  } else if (!state.treeCollapsableMode && parentPath !== state.currentNavigationPath) {
+    state.currentNavigationPath = parentPath;
+    if (!state.loadedDirectories.has(parentPath) && !state.loadingDirectories.has(parentPath)) {
+      loadDirectory(parentPath);
+    }
+  }
+
+  state.inlineExplorerEdit = {
+    mode: "rename",
+    type: isFolder ? "folder" : "file",
+    path,
+    parentPath,
+    value: path.split("/").pop(),
+  };
+
+  renderFileTree();
+}
+
+export function cancelInlineExplorerEdit() {
+  if (!state.inlineExplorerEdit) return;
+  state.inlineExplorerEdit = null;
+  renderFileTree();
+}
+
+async function submitInlineExplorerEdit() {
+  const edit = state.inlineExplorerEdit;
+  if (!edit) return;
+
+  const input = elements.fileTree?.querySelector(".inline-edit-input");
+  const name = normalizeExplorerName(input?.value, edit.type);
+  if (!name) {
+    showToast(edit.type === "folder" ? t("toast.please_enter_a_folder_name") : t("toast.please_enter_a_file_name"), "warning");
+    input?.focus();
+    return;
+  }
+
+  if (edit.mode === "create") {
+    const newPath = buildChildPath(edit.parentPath || "", name);
+    const exists = explorerItemExists(newPath, edit.type === "folder");
+    if (exists) {
+      const confirm = await showConfirmDialog({
+        title: edit.type === "folder" ? t("modal.new_folder_title") : t("modal.new_file_title"),
+        message: t("modal.file_exists_message", { name }),
+        confirmText: t("modal.overwrite"),
+        cancelText: t("modal.cancel_button"),
+        isDanger: true
+      });
+      if (!confirm) return;
+    }
+
+    state.inlineExplorerEdit = null;
+    renderFileTree();
+    if (edit.type === "folder") {
+      eventBus.emit("folder:create", { path: newPath });
+    } else {
+      eventBus.emit("file:create", { path: newPath, content: "", noOpen: false, overwrite: true });
+    }
+    return;
+  }
+
+  const oldName = edit.path.split("/").pop();
+  if (name === oldName) {
+    cancelInlineExplorerEdit();
+    return;
+  }
+
+  const newPath = buildChildPath(edit.parentPath || "", name);
+  const exists = explorerItemExists(newPath, edit.type === "folder");
+  if (exists) {
+    const confirm = await showConfirmDialog({
+      title: edit.type === "folder" ? t("modal.rename_folder_title") : t("modal.rename_file_title"),
+      message: t("modal.file_exists_message", { name }),
+      confirmText: t("modal.overwrite"),
+      cancelText: t("modal.cancel_button"),
+      isDanger: true
+    });
+    if (!confirm) return;
+  }
+
+  state.inlineExplorerEdit = null;
+  renderFileTree();
+  eventBus.emit("file:rename", { oldPath: edit.path, newPath, overwrite: true });
+}
+
+function expandPathAncestors(path) {
+  const parts = (path || "").split("/").filter(Boolean);
+  let current = "";
+  parts.forEach((part) => {
+    current = current ? `${current}/${part}` : part;
+    state.expandedFolders.add(current);
+  });
 }
 
 /**

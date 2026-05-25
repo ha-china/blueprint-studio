@@ -1,6 +1,114 @@
     .search-container {
-      padding: 8px;
+      padding: 6px 8px;
       border-bottom: 1px solid var(--border-color);
+    }
+
+    .explorer-search-container {
+      display: flex;
+    }
+
+    .explorer-search-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .explorer-search-input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .explorer-search-input-wrap .search-input {
+      height: 30px;
+      padding: 6px 58px 6px 10px;
+      font-size: 13px;
+    }
+
+    .explorer-search-clear {
+      position: absolute;
+      top: 50%;
+      right: 4px;
+      width: 22px;
+      height: 22px;
+      transform: translateY(-50%);
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-secondary);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .explorer-search-clear.visible {
+      display: flex;
+    }
+
+    .explorer-search-clear:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .explorer-search-clear .material-icons {
+      font-size: 15px;
+    }
+
+    .explorer-search-modes {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      min-width: 0;
+      flex-shrink: 0;
+    }
+
+    .explorer-search-mode {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border: none;
+      border-radius: 3px;
+      background: transparent;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .explorer-search-mode:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .explorer-search-mode.active {
+      background: var(--accent-color);
+      color: white;
+    }
+
+    .explorer-search-mode .material-icons {
+      font-size: 16px;
+    }
+
+    .explorer-search-count {
+      position: absolute;
+      top: 50%;
+      right: 30px;
+      max-width: 24px;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
     }
 
     .search-input {
@@ -17,6 +125,74 @@
 
     .search-input::placeholder {
       color: var(--text-muted);
+    }
+
+    .file-filter-control {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .file-filter-control:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-color);
+    }
+
+    .file-filter-icon {
+      font-size: 17px;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    .file-filter-icon.active {
+      color: var(--accent-color);
+    }
+
+    .file-filter-select {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .file-filter-control:focus-within {
+      border-color: var(--accent-color);
+    }
+
+    .tree-search-highlight {
+      background: color-mix(in srgb, var(--accent-color) 34%, transparent);
+      color: inherit;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
+    .explorer-search-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 32px 16px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .explorer-search-empty .material-icons {
+      font-size: 28px;
+      opacity: 0.65;
     }
 
     .selection-toolbar {
@@ -163,6 +339,56 @@
       color: white;
     }
 
+    .tree-item.inline-edit-item {
+      cursor: default;
+      background: color-mix(in srgb, var(--accent-color) 9%, var(--bg-secondary));
+    }
+
+    .inline-edit-control {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+      margin-left: 2px;
+    }
+
+    .inline-edit-input {
+      width: 100%;
+      min-width: 0;
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid var(--accent-color);
+      border-radius: 4px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .inline-edit-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .inline-edit-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-color);
+    }
+
+    .inline-edit-btn .material-icons {
+      font-size: 17px;
+    }
+
     @keyframes ai-pulse {
       0%   { box-shadow: inset 0 0 0 2px var(--accent-color); }
       50%  { box-shadow: inset 0 0 8px 2px var(--accent-color); }
@@ -186,14 +412,38 @@
       border: 2px dashed var(--accent-color);
     }
 
-    .tree-item.modified::after {
-      content: '';
-      width: 8px;
-      height: 8px;
-      background: var(--warning-color);
-      border-radius: 50%;
-      margin-left: auto;
+    .tree-git-badge {
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 6px;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 700;
+      color: var(--bg-primary);
       flex-shrink: 0;
+    }
+
+    .tree-git-badge.modified,
+    .tree-git-badge.unsaved {
+      background: var(--warning-color);
+    }
+
+    .tree-git-badge.added,
+    .tree-git-badge.staged {
+      background: var(--success-color);
+    }
+
+    .tree-git-badge.untracked {
+      background: var(--text-muted);
+    }
+
+    .tree-git-badge.conflict {
+      background: var(--error-color);
     }
 
     .tree-item-actions {
@@ -204,10 +454,6 @@
 
     .tree-item:hover .tree-item-actions {
       display: flex;
-    }
-
-    .tree-item.modified .tree-item-actions {
-      display: none;
     }
 
     /* Lazy Loading - hidden, data is prefetched */

@@ -14,6 +14,7 @@ export const state = {
   searchQuery: "",
   contentSearchEnabled: false,
   contentSearchResults: null,
+  explorerSearchLoading: false,
   isMobile: window.innerWidth <= MOBILE_BREAKPOINT,
   sidebarVisible: false,
   activeSidebarView: "explorer", // Current active sidebar view (explorer, search, sftp)
@@ -106,6 +107,7 @@ export const state = {
   autoSaveDelay: 1000,
   fileTreeCompact: false,
   fileTreeShowIcons: true,
+  fileTreeFilter: "all",
   recentFilesLimit: 10,
   breadcrumbStyle: "path",
   giteaIntegrationEnabled: false,
@@ -126,6 +128,7 @@ export const state = {
   markdownPreviewActive: false,  // Is markdown preview currently active?
   blueprintFormActive: false,    // Is the "Use Blueprint" form open?
   blueprintFormTabPath: null,    // Path of the tab that has the blueprint form open
+  inlineExplorerEdit: null,      // Inline create/rename state for the file explorer
   aiChatHistory: [],             // Saved AI chat messages
   aiSidebarVisible: false,       // Is the AI sidebar open?
   _nextUploadTarget: null,       // Temporary target for next upload operation
