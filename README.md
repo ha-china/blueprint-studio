@@ -4,7 +4,7 @@
 [![GitHub Release](https://img.shields.io/github/release/ha-china/blueprint-studio.svg?style=for-the-badge)](https://github.com/ha-china/blueprint-studio/releases)
 [![GitHub License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 [![GitHub Issues](https://img.shields.io/github/issues/ha-china/blueprint-studio.svg?style=for-the-badge)](https://github.com/ha-china/blueprint-studio/issues)
-[![GitHub Stars](https://img.shields.io/badge/Stars-94-blue.svg?style=for-the-badge&logo=github)](https://github.com/ha-china/blueprint-studio/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/ha-china/blueprint-studio?style=for-the-badge&logo=github)](https://github.com/ha-china/blueprint-studio/stargazers)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.4.0%2B-blue.svg?style=for-the-badge)
 ![Maintenance](https://img.shields.io/maintenance/yes/2026.svg?style=for-the-badge)
 ![Downloads](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Downloads&suffix=%20installs&cacheSeconds=15600&style=for-the-badge&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.blueprint_studio.total)
