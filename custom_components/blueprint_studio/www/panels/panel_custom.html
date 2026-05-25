@@ -235,6 +235,9 @@
     </div>
 
     <div class="toolbar-group">
+      <button class="toolbar-btn toolbar-btn-donate" id="btn-donate" title="Support Development" aria-label="Support Development">
+        <span class="material-icons">volunteer_activism</span>
+      </button>
       <button class="toolbar-btn" id="btn-support" title="Help & Support">
         <span class="material-icons">help_outline</span>
       </button>
@@ -870,6 +873,84 @@
     <div class="loading-content">
       <div class="loading-spinner"></div>
       <div class="loading-text" id="loading-text">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Donation Modal -->
+  <div class="modal-overlay" id="modal-donation-overlay">
+    <div class="modal donation-modal" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-title">Support Development</div>
+        <button class="modal-close" id="btn-close-donation">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="donation-intro">
+          Thank you for supporting Blueprint Studio. Choose any option below.
+        </div>
+
+        <div class="donation-options">
+          <a class="donation-option donation-option-link" href="https://ko-fi.com/soulripper13" target="_blank" rel="noopener noreferrer">
+            <div class="donation-icon" style="background: rgba(255, 94, 91, 0.14);">
+              <span class="material-icons" style="color: #ff5e5b;">local_cafe</span>
+            </div>
+            <div class="donation-text">
+              <div class="donation-title">Ko-fi</div>
+              <div class="donation-desc">One-time or recurring support</div>
+            </div>
+            <span class="material-icons donation-action">open_in_new</span>
+          </a>
+
+          <a class="donation-option donation-option-link" href="https://paypal.me/SKatoaroo" target="_blank" rel="noopener noreferrer">
+            <div class="donation-icon" style="background: rgba(0, 112, 186, 0.14);">
+              <span class="material-icons" style="color: #0070ba;">payments</span>
+            </div>
+            <div class="donation-text">
+              <div class="donation-title">PayPal</div>
+              <div class="donation-desc">Send support through PayPal</div>
+            </div>
+            <span class="material-icons donation-action">open_in_new</span>
+          </a>
+
+          <div class="donation-option donation-option-qr">
+            <div class="donation-icon" style="background: rgba(22, 119, 255, 0.14);">
+              <span class="material-icons" style="color: #1677ff;">qr_code_2</span>
+            </div>
+            <div class="donation-text">
+              <div class="donation-title">Alipay</div>
+              <div class="donation-desc">Scan the QR code to support with Alipay</div>
+              <img class="donation-qr" src="/local/blueprint_studio/alipay-qr-code.jpg?v={{VERSION}}" alt="Alipay donation QR code">
+            </div>
+          </div>
+
+          <div class="donation-option">
+            <div class="donation-icon" style="background: rgba(247, 147, 26, 0.14);">
+              <span class="material-icons" style="color: #f7931a;">currency_bitcoin</span>
+            </div>
+            <div class="donation-text">
+              <div class="donation-title">Bitcoin (BTC)</div>
+              <code class="donation-address">bc1qvu8a9gdy3dcxa94j...7claapsydjsjxn0</code>
+            </div>
+            <button class="donation-copy-btn" data-copy-value="bc1qvu8a9gdy3dcxa94jge7d3rd7claapsydjsjxn0" title="Copy Bitcoin address" aria-label="Copy Bitcoin address">
+              <span class="material-icons">content_copy</span>
+            </button>
+          </div>
+
+          <div class="donation-option">
+            <div class="donation-icon" style="background: rgba(153, 69, 255, 0.14);">
+              <span class="material-icons" style="color: #9945ff;">account_balance_wallet</span>
+            </div>
+            <div class="donation-text">
+              <div class="donation-title">Solana (SOL)</div>
+              <code class="donation-address">4jvCR2YFQLqguoyz9qAM...zRHFG8SeaeBK</code>
+            </div>
+            <button class="donation-copy-btn" data-copy-value="4jvCR2YFQLqguoyz9qAMPzVbaEcDsG5nzRHFG8SeaeBK" title="Copy Solana address" aria-label="Copy Solana address">
+              <span class="material-icons">content_copy</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -914,17 +914,22 @@ export function initializeEventHandlers() {
         eventBus.emit('ui:hide-modal');
         handled = true;
       }
-      // 4. Support Modal
+      // 4. Donation Modal
+      else if (elements.modalDonationOverlay?.classList.contains("visible")) {
+        elements.modalDonationOverlay.classList.remove("visible");
+        handled = true;
+      }
+      // 5. Support Modal
       else if (elements.modalSupportOverlay?.classList.contains("visible")) {
         elements.modalSupportOverlay.classList.remove("visible");
         handled = true;
       }
-      // 5. Search Widget
+      // 6. Search Widget
       else if (state.searchWidgetVisible) {
         eventBus.emit('search:close');
         handled = true;
       }
-      // 6. AI Sidebar
+      // 7. AI Sidebar
       else if (state.aiSidebarVisible) {
         eventBus.emit('ui:toggle-ai-sidebar', false);
         handled = true;

@@ -621,6 +621,7 @@
   "toolbar.ai_studio": "AI Studio Copilot",
   "ai.initial_message": "Hello! I'm your AI Copilot. I can help you generate automations, fix YAML errors, or explain Home Assistant configurations. How can I help you today?",
   "toolbar.collapse_all": "Collapse All Folders",
+  "toolbar.donate": "Support Development",
   "toolbar.download": "Download File",
   "toolbar.download_folder": "Download Folder (ZIP)",
   "toolbar.format": "Format Code (Shift+Alt+F)",

@@ -118,6 +118,11 @@ export function refreshAllUIStrings() {
   if (elements.btnGitStatus) elements.btnGitStatus.title = t("toolbar.git_status");
   if (elements.btnGitSettings) elements.btnGitSettings.title = t("toolbar.git_settings");
   
+  if (elements.btnDonate) {
+    const donateTitle = t("toolbar.donate");
+    elements.btnDonate.title = donateTitle;
+    elements.btnDonate.setAttribute("aria-label", donateTitle);
+  }
   if (elements.btnSupport) elements.btnSupport.title = t("toolbar.help");
   if (elements.btnTerminal) elements.btnTerminal.title = t("toolbar.terminal");
   if (elements.btnAiStudio) elements.btnAiStudio.title = t("toolbar.ai_studio");

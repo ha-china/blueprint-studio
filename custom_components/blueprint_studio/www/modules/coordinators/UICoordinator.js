@@ -676,6 +676,47 @@ export function initUICoordinator(callbacks) {
         });
     }
 
+    if (elements.btnDonate) {
+        elements.btnDonate.addEventListener("click", () => {
+            if (elements.modalDonationOverlay) elements.modalDonationOverlay.classList.add("visible");
+        });
+    }
+
+    if (elements.btnCloseDonation) {
+        elements.btnCloseDonation.addEventListener("click", () => {
+            if (elements.modalDonationOverlay) elements.modalDonationOverlay.classList.remove("visible");
+        });
+    }
+
+    if (elements.modalDonationOverlay) {
+        elements.modalDonationOverlay.addEventListener("click", (e) => {
+            if (e.target === elements.modalDonationOverlay) {
+                elements.modalDonationOverlay.classList.remove("visible");
+            }
+        });
+
+        elements.modalDonationOverlay.querySelectorAll(".donation-copy-btn").forEach((button) => {
+            button.addEventListener("click", async () => {
+                const value = button.dataset.copyValue;
+                if (!value) return;
+
+                const copied = await copyToClipboardUtil(value);
+                if (copied) {
+                    if (functions.showToast) functions.showToast("Donation address copied", "success", 1800);
+                    const icon = button.querySelector(".material-icons");
+                    if (icon) {
+                        icon.textContent = "check";
+                        window.setTimeout(() => {
+                            icon.textContent = "content_copy";
+                        }, 1600);
+                    }
+                } else if (functions.showToast) {
+                    functions.showToast("Could not copy donation address", "error");
+                }
+            });
+        });
+    }
+
     // Support Modal
     if (elements.btnSupport) {
         elements.btnSupport.addEventListener("click", () => {

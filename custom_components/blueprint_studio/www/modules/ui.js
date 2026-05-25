@@ -551,6 +551,9 @@ export function initElements() {
     elements.btnMenu = document.getElementById("btn-menu");
     elements.btnSearch = document.getElementById("btn-search");
     elements.btnRefresh = document.getElementById("btn-refresh");
+    elements.btnDonate = document.getElementById("btn-donate");
+    elements.modalDonationOverlay = document.getElementById("modal-donation-overlay");
+    elements.btnCloseDonation = document.getElementById("btn-close-donation");
     elements.btnSupport = document.getElementById("btn-support");
     elements.btnSupportGuide = document.getElementById("btn-support-guide");
     elements.modalSupportOverlay = document.getElementById("modal-support-overlay");

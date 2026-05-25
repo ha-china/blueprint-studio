@@ -661,6 +661,11 @@ If you find it useful and would like to support ongoing development, maintenance
 * **PayPal**
   [https://paypal.me/SKatoaroo](https://paypal.me/SKatoaroo)
 
+* **Alipay**
+  Scan the QR code below:
+
+  <img src="images/Alipay-qr-code.jpg" alt="Alipay donation QR code" width="220">
+
 * **Bitcoin (BTC)**
   `bc1qvu8a9gdy3dcxa94jge7d3rd7claapsydjsjxn0`
 
