@@ -12,6 +12,7 @@ import sys
 import io
 import threading
 import time
+from pathlib import Path
 
 # PTY support (Linux only)
 try:
@@ -472,22 +473,15 @@ TROUBLESHOOTING:
                 pkey, key_type = self._parse_ssh_key(private_key, key_passphrase)
                 _LOGGER.info("Using %s authentication for SSH %s@%s:%d",
                            key_type, username, host, port)
-
-                # Write key to .ssh directory with secure permissions
-                key_filename = f"key_{host.replace('.', '_')}_{int(time.time())}"
-                key_file = os.path.join(ssh_dir, key_filename)
-                with open(key_file, 'w') as f:
-                    f.write(private_key)
-                os.chmod(key_file, 0o600)
-                _LOGGER.info("Wrote SSH key to %s", key_file)
-
-                # Build SSH command as argument list (no shell interpolation)
-                cmd_args = [
-                    "ssh", "-i", key_file,
-                    "-o", "PubkeyAuthentication=yes",
-                    "-o", "PasswordAuthentication=no",
-                    f"{username}@{host}", "-p", str(port)
-                ]
+                return self.spawn_ssh_paramiko(
+                    username=username,
+                    host=host,
+                    port=port,
+                    private_key=private_key,
+                    key_passphrase=key_passphrase,
+                    rows=rows,
+                    cols=cols
+                )
             except ValueError as e:
                 _LOGGER.error("SSH key validation failed: %s", e)
                 raise RuntimeError(f"Invalid SSH key: {str(e)}")
@@ -551,10 +545,6 @@ TROUBLESHOOTING:
 
         self.resize(master_fd, rows, cols)
 
-        # Schedule cleanup of temporary key file (SSH reads it at startup)
-        if private_key and key_file:
-            self._cleanup_temp_key(key_file)
-
         return master_fd, p.pid
 
 
@@ -567,14 +557,19 @@ TROUBLESHOOTING:
         _LOGGER.info("Terminal command by %s: %s (cwd: %s)", user, command_str, cwd)
 
         # Determine effective CWD
-        base_dir = self.hass.config.config_dir
+        base_dir = Path(self.hass.config.config_dir).resolve()
         if cwd:
-            # Ensure cwd is valid and absolute (or relative to config)
-            if not os.path.isdir(cwd):
+            try:
+                resolved_cwd = Path(cwd).resolve()
+            except OSError:
                 return {"output": f"Error: Working directory '{cwd}' does not exist.", "retval": 1}
-            effective_cwd = cwd
+            if not resolved_cwd.is_dir():
+                return {"output": f"Error: Working directory '{cwd}' does not exist.", "retval": 1}
+            if not resolved_cwd.is_relative_to(base_dir):
+                return {"output": "Error: Working directory must be within the config directory.", "retval": 1}
+            effective_cwd = str(resolved_cwd)
         else:
-            effective_cwd = base_dir
+            effective_cwd = str(base_dir)
 
         try:
             # 1. Basic safety checks
@@ -608,10 +603,14 @@ TROUBLESHOOTING:
 
             # Handle 'cd' internally
             if cmd == "cd":
-                target = args[1] if len(args) > 1 else base_dir
+                target = args[1] if len(args) > 1 else str(base_dir)
                 # Resolve path
                 new_path = os.path.abspath(os.path.join(effective_cwd, target))
-                if os.path.isdir(new_path):
+                try:
+                    resolved_new_path = Path(new_path).resolve()
+                except OSError:
+                    resolved_new_path = None
+                if resolved_new_path and resolved_new_path.is_dir() and resolved_new_path.is_relative_to(base_dir):
                     return {"output": "", "retval": 0, "new_cwd": new_path}
                 else:
                     return {"output": f"cd: {target}: No such file or directory", "retval": 1}

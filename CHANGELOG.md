@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.2] - 2026-05-26
+
+- **Security hardening for Blueprint Studio APIs** — Restricted the Blueprint Studio backend, stream, and upload APIs to admin users to match the admin-only panel. Sensitive actions such as Home Assistant service calls, template rendering, global search/replace, file access, Git, SFTP, and uploads are no longer reachable by non-admin authenticated users. Git credential helpers no longer embed raw credentials into generated shell scripts or configure Git's plaintext credential store. Terminal SSH key auth now uses in-memory Paramiko sessions instead of writing private keys to disk, and legacy terminal command working directories are bounded to the Home Assistant config directory. API exception responses now return a generic error message while keeping full details in server logs. Reported by anonymous.
+
 - **Donation support added to the toolbar** — Added a professional Support Development toolbar button that opens a donation modal with Ko-fi, PayPal, Alipay QR, Bitcoin, and Solana support options. The README support section now lists the same options.
 
 - **Inline file explorer create and rename** — New File, New Folder, and Rename now happen directly inside the file explorer with inline inputs, Enter/check to confirm, and Escape/close/blur to cancel, reducing modal friction for common file management tasks.
@@ -981,6 +985,7 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 
 
 ## Version History
+- **2.5.2** - Security Hardening, Donation Support & File Explorer Improvements
 - **2.5.1** - Mobile File Tree Indentation, Allow all file types & Organisation Transfer
 - **2.5.0** - HA Agent AI Mode, Diff Viewer Rewrite & File Navigation Overhaul
 - **2.4.8** - Improved Diff Navigation, Stable Settings Sync & UI Fixes
@@ -1014,7 +1019,8 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 - **1.2.0** - GitHub Integration, Pin Favorites & Auto-Refresh
 - **1.0.0** - First stable release
 
-[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v2.5.1...HEAD
+[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v2.5.2...HEAD
+[2.5.2]: https://github.com/ha-china/blueprint-studio/releases/tag/v2.5.2
 [2.5.1]: https://github.com/ha-china/blueprint-studio/releases/tag/v2.5.1
 [2.5.0]: https://github.com/ha-china/blueprint-studio/releases/tag/v2.5.0
 [2.4.8]: https://github.com/ha-china/blueprint-studio/releases/tag/v2.4.8

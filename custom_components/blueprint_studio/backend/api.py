@@ -34,14 +34,19 @@ from . import api_misc
 
 _LOGGER = logging.getLogger(__name__)
 
-# Actions that modify or delete data and should be restricted to admin users only.
+# Blueprint Studio is registered as an admin-only panel and exposes config files,
+# git operations, SFTP, terminal helpers, and HA service calls. Keep the backend
+# at the same privilege level as the UI instead of trying to maintain a denylist.
 _ADMIN_ONLY_ACTIONS = frozenset({
+    "call_service",
     "delete",
     "delete_multi",
+    "global_replace",
     "git_force_push",
     "git_hard_reset",
     "git_delete_repo",
     "git_delete_remote_branch",
+    "render_template",
     "restart_home_assistant",
 })
 
@@ -73,6 +78,16 @@ class BlueprintStudioApiView(HomeAssistantView):
             _LOGGER.warning("Blueprint Studio: No authenticated user on request")
         return user
 
+    def _require_admin(self, user) -> web.Response | None:
+        """Return a 403 response unless the authenticated user is an admin."""
+        if not user.is_admin:
+            _LOGGER.warning(
+                "Blueprint Studio: non-admin user '%s' attempted API access",
+                user.name,
+            )
+            return json_message("Admin privileges required", status_code=403)
+        return None
+
     def _update_hass(self, hass: HomeAssistant) -> None:
         """Update hass instance in managers."""
         self.hass = hass
@@ -94,6 +109,8 @@ class BlueprintStudioApiView(HomeAssistantView):
         user = await self._authenticate(request)
         if not user:
             return web.Response(status=401, text="Unauthorized")
+        if admin_error := self._require_admin(user):
+            return admin_error
 
         if not action:
             return json_message("Missing action", status_code=400)
@@ -133,8 +150,8 @@ class BlueprintStudioApiView(HomeAssistantView):
                 return await result
             return result
         except Exception as err:
-            _LOGGER.error("GET action %s failed: %s", action, err)
-            return json_message(f"Action failed: {str(err)}", status_code=500)
+            _LOGGER.error("GET action %s failed: %s", action, err, exc_info=True)
+            return json_message("Action failed. See server logs for details.", status_code=500)
 
     # ========== POST ==========
 
@@ -143,6 +160,8 @@ class BlueprintStudioApiView(HomeAssistantView):
         user = await self._authenticate(request)
         if not user:
             return web.Response(status=401, text="Unauthorized")
+        if admin_error := self._require_admin(user):
+            return admin_error
 
         try:
             body = await request.read()
@@ -278,8 +297,8 @@ class BlueprintStudioApiView(HomeAssistantView):
             result = handler(data, hass, user)
             return await result if asyncio.iscoroutine(result) else result
         except Exception as err:
-            _LOGGER.error("POST action %s failed: %s", action, err)
-            return json_message(f"Action failed: {str(err)}", status_code=500)
+            _LOGGER.error("POST action %s failed: %s", action, err, exc_info=True)
+            return json_message("Action failed. See server logs for details.", status_code=500)
 
 
 class BlueprintStudioStreamView(HomeAssistantView):
@@ -318,6 +337,9 @@ class BlueprintStudioStreamView(HomeAssistantView):
         user = refresh_token.user
         if not user or not user.is_active:
             return web.Response(status=401, text="User not active")
+        if not user.is_admin:
+            _LOGGER.warning("Blueprint Studio: non-admin user %s attempted stream access", user.name)
+            return web.Response(status=403, text="Admin access required")
 
         action = request.query.get("action")
         params = request.query
@@ -356,6 +378,9 @@ class BlueprintStudioUploadView(HomeAssistantView):
         user = request.get("hass_user")
         if not user:
             return web.Response(status=401, text="Unauthorized")
+        if not user.is_admin:
+            _LOGGER.warning("Blueprint Studio: non-admin user %s attempted upload access", user.name)
+            return json_message("Admin privileges required", status_code=403)
 
         hass = request.app["hass"]
         self.file.hass = hass

@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,14 @@ _LOGGER = logging.getLogger(__name__)
 GITHUB_DEVICE_CODE_URL = "https://github.com/login/device/code"
 GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
 GITHUB_CREATE_REPO_URL = "https://api.github.com/user/repos"
+
+_CREDENTIAL_SAFE = re.compile(r"^[^\r\n\x00]+$")
+
+
+def _validate_git_credential(value: str, field_name: str) -> None:
+    """Reject credential values that cannot be safely emitted by a helper."""
+    if not isinstance(value, str) or not _CREDENTIAL_SAFE.fullmatch(value):
+        raise ValueError(f"Git credential '{field_name}' contains unsafe characters")
 
 class GitManager:
     """Class to handle Git operations."""
@@ -60,23 +69,41 @@ class GitManager:
             if needs_auth and creds and "username" in creds and "token" in creds:
                 username = creds["username"]
                 token = base64.b64decode(creds["token"]).decode()
-                helper_script = self.config_dir / f".git_credential_helper_{auth_provider}.sh"
-                helper_content = f"#!/bin/sh\necho \"username={username}\"\necho \"password={token}\"\n"
-                helper_script.write_text(helper_content)
-                helper_script.chmod(0o700)
+                _validate_git_credential(username, "username")
+                _validate_git_credential(token, "token")
 
-                result = subprocess.run(
-                    ["git", "-c", safe_dir_config, "-c", file_mode_config, "-c", f"credential.helper={helper_script}"] + args,
-                    cwd=self.config_dir,
-                    capture_output=True,
+                helper_fd, helper_path = tempfile.mkstemp(
+                    prefix=f".git_credential_helper_{auth_provider}_",
+                    suffix=".sh",
+                    dir=self.config_dir,
                     text=True,
-                    timeout=timeout,
-                    env=env
                 )
                 try:
-                    helper_script.unlink()
-                except OSError as e:
-                    _LOGGER.debug("Failed to clean up helper script: %s", e)
+                    with os.fdopen(helper_fd, "w") as helper_file:
+                        helper_file.write(
+                            "#!/bin/sh\n"
+                            "printf '%s\\n' \"username=$GIT_USERNAME\"\n"
+                            "printf '%s\\n' \"password=$GIT_PASSWORD\"\n"
+                        )
+                    os.chmod(helper_path, 0o700)
+                    env["GIT_USERNAME"] = username
+                    env["GIT_PASSWORD"] = token
+
+                    result = subprocess.run(
+                        ["git", "-c", safe_dir_config, "-c", file_mode_config, "-c", f"credential.helper={helper_path}"] + args,
+                        cwd=self.config_dir,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout,
+                        env=env
+                    )
+                finally:
+                    env.pop("GIT_USERNAME", None)
+                    env.pop("GIT_PASSWORD", None)
+                    try:
+                        os.unlink(helper_path)
+                    except OSError as e:
+                        _LOGGER.debug("Failed to clean up helper script: %s", e)
             else:
                 result = subprocess.run(
                     ["git", "-c", safe_dir_config, "-c", file_mode_config] + args,
@@ -424,7 +451,8 @@ class GitManager:
     async def set_credentials(self, username: str, token: str, remember_me: bool = True, provider: str = "github") -> web.Response:
         """Set git credentials."""
         try:
-            await self.hass.async_add_executor_job(self._run_git_command, ["config", "credential.helper", "store"])
+            _validate_git_credential(username, "username")
+            _validate_git_credential(token, "token")
             
             creds_key = f"{provider}_credentials"
             if provider == "github":
