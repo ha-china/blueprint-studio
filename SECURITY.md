@@ -6,8 +6,8 @@ We release patches for security vulnerabilities. Currently supported versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| 2.5.x   | :white_check_mark: |
+| < 2.5   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -71,6 +71,7 @@ Blueprint Studio implements several security measures:
 ### Authentication
 - All API endpoints require Home Assistant authentication
 - Only admin users can access Blueprint Studio
+- Blueprint Studio backend, stream, upload, Git, SFTP, terminal helper, and file-management APIs are restricted to admin users
 
 ### File Type Restrictions
 - Only whitelisted file extensions can be edited
@@ -83,6 +84,12 @@ Blueprint Studio implements several security measures:
 ### Input Validation
 - All user input is validated
 - File operations are checked for safety
+- Git credential helpers avoid embedding raw credentials into generated shell scripts
+- SSH private-key terminal sessions use in-memory Paramiko authentication instead of writing private keys to disk
+
+## Published Advisories
+
+- [GHSA-88ff-pg4h-qg6m](https://github.com/ha-china/blueprint-studio/security/advisories/GHSA-88ff-pg4h-qg6m) — Blueprint Studio API authorization hardening, fixed in 2.5.2.
 
 ## Scope
 
@@ -130,7 +137,6 @@ If you have suggestions on how this process could be improved, please submit a p
 
 We maintain a list of security researchers who have responsibly disclosed vulnerabilities:
 
-<!-- This section will be updated as needed -->
-*No vulnerabilities reported yet*
+- GHSA-88ff-pg4h-qg6m — anonymous
 
 Thank you for helping keep Blueprint Studio and its users safe!
