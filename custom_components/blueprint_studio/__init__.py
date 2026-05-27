@@ -145,7 +145,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.http.register_view(api_view)
 
     # Register streaming view for serve_file/download_folder (requires_auth=False, validates token manually)
-    stream_view = BlueprintStudioStreamView(api_view.file)
+    stream_view = BlueprintStudioStreamView(api_view.file, api_view.sftp)
     hass.http.register_view(stream_view)
 
     # Register multipart upload view for large binary files (bypasses 16MB JSON body limit)

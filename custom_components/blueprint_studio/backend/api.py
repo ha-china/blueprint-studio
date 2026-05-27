@@ -316,9 +316,10 @@ class BlueprintStudioStreamView(HomeAssistantView):
     name = "api:blueprint_studio:stream"
     requires_auth = False
 
-    def __init__(self, file_manager: FileManager) -> None:
+    def __init__(self, file_manager: FileManager, sftp_manager: SftpManager) -> None:
         """Initialize the view."""
         self.file = file_manager
+        self.sftp = sftp_manager
 
     async def get(self, request: web.Request) -> web.Response:
         """Authenticate via query-param token, then serve the file."""
@@ -351,6 +352,21 @@ class BlueprintStudioStreamView(HomeAssistantView):
             return await api_files.download_folder(self.file, params, request)
         elif action == "search_stream":
             return await api_files.search_stream(self.file, params, request)
+        elif action == "sftp_serve_file":
+            stream_id = request.query.get("stream_id", "")
+            stream_data = self.sftp.get_stream_token(stream_id)
+            if not stream_data:
+                return web.Response(status=404, text="Stream not found or expired")
+            return await api_sftp.sftp_stream_file(
+                self.sftp,
+                hass,
+                request,
+                stream_data["host"],
+                stream_data["port"],
+                stream_data["username"],
+                stream_data["auth"],
+                stream_data["path"],
+            )
         else:
             return web.Response(status=400, text="Unknown streaming action")
 

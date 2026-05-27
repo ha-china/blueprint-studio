@@ -5,8 +5,8 @@ import { getFileIcon, formatBytes, isTextFile } from './utils.js';
 import { t } from './translations.js';
 import { enableLongPressContextMenu } from './utils.js';
 import { eventBus } from './event-bus.js';
-import { API_BASE, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS } from './constants.js';
-import { fetchWithAuth, getAuthToken } from './api.js';
+import { API_BASE, STREAM_BASE, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS } from './constants.js';
+import { fetchWithAuth, getAuthToken, urlWithToken } from './api.js';
 import {
   showToast,
   showConfirmDialog,
@@ -155,6 +155,25 @@ export async function sftpStreamFile(connId, remotePath) {
 
   const blob = await response.blob();
   return URL.createObjectURL(blob);
+}
+
+/**
+ * Prepare a direct GET streaming URL for SFTP media.
+ * The URL contains only an opaque short-lived stream id plus the HA auth token;
+ * SFTP credentials stay server-side.
+ */
+export async function sftpStreamUrl(connId, remotePath) {
+  const conn = findConnection(connId);
+  if (!conn) throw new Error("SFTP connection not found");
+
+  const result = await callSftpApi("sftp_prepare_stream", conn, { path: remotePath });
+  if (!result?.success || !result.stream_id) {
+    throw new Error(result?.message || "Failed to prepare SFTP stream");
+  }
+
+  return await urlWithToken(
+    `${STREAM_BASE}?action=sftp_serve_file&stream_id=${encodeURIComponent(result.stream_id)}&_t=${Date.now()}`
+  );
 }
 
 // ─── Panel Rendering ──────────────────────────────────────────────────────────
@@ -765,11 +784,11 @@ export async function openSftpFile(connId, remotePath, noActivate = false) {
   const isVideo = VIDEO_EXTENSIONS.has(ext);
   const isAudio = AUDIO_EXTENSIONS.has(ext);
 
-  // Video/audio: stream raw bytes via sftp_serve_file → blob URL (no base64)
+  // Video/audio: use a direct stream URL so the browser can issue Range requests.
   if (isVideo || isAudio) {
     showToast(t("toast.sftp_opening", { name: fileName }), 'info');
     try {
-      const blobUrl = await sftpStreamFile(connId, remotePath);
+      const streamUrl = await sftpStreamUrl(connId, remotePath);
       const mimePrefix = isVideo ? "video" : "audio";
       const mimeMap = {
         mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime",
@@ -793,7 +812,7 @@ export async function openSftpFile(connId, remotePath, noActivate = false) {
         isVideo,
         isAudio,
         mimeType: mimeMap[ext] || `${mimePrefix}/${ext}`,
-        blobUrl,
+        streamUrl,
         mtime: null,
       };
       eventBus.emit("tab:open", { tab: tab, noActivate: noActivate });
@@ -1458,4 +1477,3 @@ export async function restoreSftpSession() {
     }
   }
 }
-

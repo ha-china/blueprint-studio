@@ -7,6 +7,7 @@ import os
 import stat
 import base64
 import mimetypes
+import secrets
 import threading
 import time
 from contextlib import contextmanager
@@ -52,6 +53,9 @@ class SftpManager:
         self._key_locks_lock = threading.Lock()  # protects _key_locks dict
         self._max_pool_size = 5
         self._idle_timeout = 300  # seconds
+        self._stream_tokens: dict[str, dict] = {}
+        self._stream_tokens_lock = threading.Lock()
+        self._stream_token_ttl = 3600  # seconds
 
     # -- pool internals ------------------------------------------------------
 
@@ -155,6 +159,42 @@ class SftpManager:
             except Exception:
                 pass
         _LOGGER.info("SFTP pool: all connections closed")
+
+    # -- streaming tokens ----------------------------------------------------
+
+    def create_stream_token(self, host: str, port: int, username: str, auth: dict, path: str) -> dict:
+        """Create a short-lived opaque token for GET-based media streaming."""
+        token = secrets.token_urlsafe(32)
+        expires_at = time.monotonic() + self._stream_token_ttl
+        with self._stream_tokens_lock:
+            self._stream_tokens[token] = {
+                "host": host,
+                "port": int(port),
+                "username": username,
+                "auth": auth,
+                "path": path,
+                "expires_at": expires_at,
+            }
+        return {
+            "success": True,
+            "stream_id": token,
+            "expires_in": self._stream_token_ttl,
+            "mime_type": mimetypes.guess_type(path)[0] or "application/octet-stream",
+        }
+
+    def get_stream_token(self, token: str) -> dict | None:
+        """Return stream-token metadata and refresh its idle expiry."""
+        now = time.monotonic()
+        with self._stream_tokens_lock:
+            stale = [key for key, value in self._stream_tokens.items() if value.get("expires_at", 0) <= now]
+            for key in stale:
+                self._stream_tokens.pop(key, None)
+
+            value = self._stream_tokens.get(token)
+            if not value:
+                return None
+            value["expires_at"] = now + self._stream_token_ttl
+            return dict(value)
 
     # -- connection context manager ------------------------------------------
 
@@ -612,6 +652,31 @@ class SftpManager:
                 mime_type = mimetypes.guess_type(path)[0] or "application/octet-stream"
                 return {"success": True, "data": data, "size": len(data), "mime_type": mime_type}
         return _sftp_safe_exec("read_file_raw", op)
+
+    def get_file_info(self, host: str, port: int, username: str, auth: dict, path: str) -> dict:
+        """Return size and MIME metadata for a remote file."""
+        def op():
+            with self._get_connection(host, port, username, auth) as (_, sftp):
+                attr = sftp.stat(path)
+                if stat.S_ISDIR(attr.st_mode):
+                    return {"success": False, "message": "Path is a directory", "status_code": 400}
+                return {
+                    "success": True,
+                    "size": attr.st_size or 0,
+                    "mime_type": mimetypes.guess_type(path)[0] or "application/octet-stream",
+                }
+        return _sftp_safe_exec("get_file_info", op)
+
+    def read_file_range(self, host: str, port: int, username: str, auth: dict, path: str,
+                        start: int, length: int) -> dict:
+        """Read a bounded byte range from a remote file."""
+        def op():
+            with self._get_connection(host, port, username, auth) as (_, sftp):
+                with sftp.open(path, "rb") as fh:
+                    fh.seek(start)
+                    data = fh.read(length)
+                return {"success": True, "data": data}
+        return _sftp_safe_exec("read_file_range", op)
 
     def make_directory(self, host: str, port: int, username: str, auth: dict, path: str) -> dict:
         """Create a remote directory (including parents). Returns {success}."""

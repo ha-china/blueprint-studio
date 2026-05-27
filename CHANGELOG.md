@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Git status badges in the file explorer** — Files now show compact Git status badges for modified, untracked, added, conflict, and staged states when GitHub integration is enabled.
 
+- **SFTP video and audio streaming improved** — SFTP media previews now use direct authenticated stream URLs with HTTP Range support instead of preloading the whole file into a browser blob. Seeking starts faster, large videos use far less browser memory, and SFTP file downloads stream directly instead of buffering the full file first.
+
 ## [2.5.1] - 2026-05-22
 
 - **Blueprint- Studio has been transferred to ha-china organisation**

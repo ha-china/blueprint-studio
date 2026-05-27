@@ -18,7 +18,7 @@ import {
   uploadSftpFile,
   uploadSftpFolder,
   refreshSftp,
-  sftpStreamFile,
+  sftpStreamUrl,
   getSftpConnectionDetails
 } from './sftp.js';
 
@@ -41,9 +41,9 @@ export async function downloadFileByPath(path) {
   try {
     let url;
     if (isSftpPath(path)) {
-      // SFTP: stream raw bytes via sftp_serve_file → blob URL
+      // SFTP: direct stream URL avoids buffering the whole file in browser memory.
       const { connId, remotePath } = parseSftpPath(path);
-      url = await sftpStreamFile(connId, remotePath);
+      url = await sftpStreamUrl(connId, remotePath);
     } else {
       // Local: use authenticated serve_file URL
       url = await downloadFileUrl(path);
@@ -54,10 +54,6 @@ export async function downloadFileByPath(path) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    // Revoke blob URLs after a short delay
-    if (url.startsWith("blob:")) {
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-    }
     showToast(`Downloaded ${filename}`, "success");
   } catch (error) {
     showToast(`Failed to download ${filename}: ${error.message}`, "error");

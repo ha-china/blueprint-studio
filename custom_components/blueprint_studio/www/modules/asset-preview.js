@@ -1,6 +1,6 @@
 /** ASSET-PREVIEW.JS | Purpose: * Handles preview rendering for non-code files including images, PDFs, videos, */
 import { state, elements } from './state.js';
-import { isSftpPath, parseSftpPath, sftpStreamFile } from './sftp.js';
+import { isSftpPath, parseSftpPath, sftpStreamUrl } from './sftp.js';
 import { t } from './translations.js';
 import { eventBus } from './event-bus.js';
 import { copyToClipboard } from './utils.js';
@@ -298,23 +298,21 @@ async function renderPdfPreview(tab, filename) {
 }
 
 /**
- * Renders video preview with streaming URL (zero-copy, Range support).
- * Falls back to base64 data URL for SFTP files.
+ * Renders video preview with streaming URL (Range support).
  */
 async function renderVideoPreview(tab, filename) {
   elements.assetPreview.style.padding = "0";
 
-  // SFTP files: use pre-fetched blob URL or stream on-demand; local files stream via serve_file
+  // SFTP files use a direct stream URL so the browser can request metadata/ranges.
   const isSftp = isSftpPath(tab.path);
   let srcUrl;
   if (isSftp) {
-    // Prefer blob URL from tab (set during openSftpFile), fall back to streaming
-    if (tab.blobUrl) {
-      srcUrl = tab.blobUrl;
+    if (tab.streamUrl) {
+      srcUrl = tab.streamUrl;
     } else {
       const { connId, remotePath } = parseSftpPath(tab.path);
-      srcUrl = await sftpStreamFile(connId, remotePath);
-      tab.blobUrl = srcUrl;
+      srcUrl = await sftpStreamUrl(connId, remotePath);
+      tab.streamUrl = srcUrl;
     }
   } else {
     srcUrl = await urlWithToken(serveFileUrl(tab.path));
@@ -361,7 +359,7 @@ async function renderVideoPreview(tab, filename) {
 
 /**
  * Renders audio preview with streaming URL.
- * Uses blob URL for SFTP files (streamed via sftp_serve_file).
+ * Uses direct SFTP stream URLs for browser Range support.
  */
 async function renderAudioPreview(tab, filename) {
   elements.assetPreview.style.padding = "0";
@@ -369,12 +367,12 @@ async function renderAudioPreview(tab, filename) {
   const isSftp = isSftpPath(tab.path);
   let srcUrl;
   if (isSftp) {
-    if (tab.blobUrl) {
-      srcUrl = tab.blobUrl;
+    if (tab.streamUrl) {
+      srcUrl = tab.streamUrl;
     } else {
       const { connId, remotePath } = parseSftpPath(tab.path);
-      srcUrl = await sftpStreamFile(connId, remotePath);
-      tab.blobUrl = srcUrl;
+      srcUrl = await sftpStreamUrl(connId, remotePath);
+      tab.streamUrl = srcUrl;
     }
   } else {
     srcUrl = await urlWithToken(serveFileUrl(tab.path));
