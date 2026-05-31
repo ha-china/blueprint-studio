@@ -13,6 +13,7 @@ import {
 } from './ui.js';
 import { getFileIcon, formatBytes, isMobile, isTouchDevice } from './utils.js';
 import { saveSettings } from './settings.js';
+import { isItemSelected } from './selection.js';
 
 // Timer for debounced rendering
 export let fileTreeRenderTimer = null;
@@ -919,7 +920,7 @@ export function createTreeItem(name, depth, isFolder, isExpanded, itemPath = nul
   checkbox.className = "tree-item-checkbox";
   if (state.selectionMode) {
     checkbox.classList.add("visible");
-    checkbox.checked = state.selectedItems.has(itemPath);
+    checkbox.checked = isItemSelected(itemPath);
   }
 
   // Prevent item click when clicking checkbox

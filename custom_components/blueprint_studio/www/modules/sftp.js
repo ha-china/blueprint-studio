@@ -176,6 +176,33 @@ export async function sftpStreamUrl(connId, remotePath) {
   );
 }
 
+async function sftpFolderZipUrl(connId, remotePath) {
+  const conn = findConnection(connId);
+  if (!conn) throw new Error("SFTP connection not found");
+
+  const result = await callSftpApi("sftp_prepare_stream", conn, {
+    path: remotePath,
+    stream_type: "folder_zip",
+  });
+  if (!result?.success || !result.stream_id) {
+    throw new Error(result?.message || "Failed to prepare SFTP folder download");
+  }
+
+  return await urlWithToken(
+    `${STREAM_BASE}?action=sftp_serve_file&stream_id=${encodeURIComponent(result.stream_id)}&_t=${Date.now()}`
+  );
+}
+
+function isSftpItemSelected(virtualPath) {
+  if (state.selectedItems.has(virtualPath)) return true;
+  for (const selectedPath of state.selectedItems) {
+    if (selectedPath.startsWith("sftp://") && virtualPath.startsWith(`${selectedPath.replace(/\/+$/, "")}/`)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // ─── Panel Rendering ──────────────────────────────────────────────────────────
 
 export function renderSftpPanel() {
@@ -334,7 +361,7 @@ export function renderSftpPanel() {
     checkbox.className = "tree-item-checkbox";
     if (state.selectionMode) {
       checkbox.classList.add("visible");
-      checkbox.checked = state.selectedItems.has(virtualPath);
+      checkbox.checked = isSftpItemSelected(virtualPath);
     }
     checkbox.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -389,7 +416,7 @@ export function renderSftpPanel() {
     checkbox.className = "tree-item-checkbox";
     if (state.selectionMode) {
       checkbox.classList.add("visible");
-      checkbox.checked = state.selectedItems.has(virtualPath);
+      checkbox.checked = isSftpItemSelected(virtualPath);
     }
     checkbox.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -577,7 +604,7 @@ function _renderSftpTreeLevel(container, connId, path, depth) {
     checkbox.className = "tree-item-checkbox";
     if (state.selectionMode) {
       checkbox.classList.add("visible");
-      checkbox.checked = state.selectedItems.has(virtualPath);
+      checkbox.checked = isSftpItemSelected(virtualPath);
     }
     checkbox.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -649,7 +676,7 @@ function _renderSftpTreeLevel(container, connId, path, depth) {
     checkbox.className = "tree-item-checkbox";
     if (state.selectionMode) {
       checkbox.classList.add("visible");
-      checkbox.checked = state.selectedItems.has(virtualPath);
+      checkbox.checked = isSftpItemSelected(virtualPath);
     }
     checkbox.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1184,26 +1211,14 @@ async function _downloadFolder(connId, remotePath) {
   const folderName = remotePath.split('/').filter(Boolean).pop() || "download";
   showToast("Preparing remote folder download...", 'info');
   try {
-    const result = await callSftpApi('sftp_download_folder', conn, { path: remotePath });
-    if (result.success && result.data) {
-      const binaryString = atob(result.data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: "application/zip" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${folderName}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      showToast(t("toast.download_success"), "success");
-    } else {
-      showToast(t("toast.download_items_fail", { error: result.message || "Unknown error" }), "error");
-    }
+    const url = await sftpFolderZipUrl(connId, remotePath);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${folderName}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast(t("toast.download_success"), "success");
   } catch (err) {
     showToast(t("toast.download_items_fail", { error: err.message }), 'error');
   }

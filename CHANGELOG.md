@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Folder ZIP downloads stream in chunks** — Local and SFTP folder ZIP downloads, including selected-item ZIP downloads, now stream archive data directly instead of building full ZIP buffers or base64 JSON responses first. Large folder downloads start sooner, use less memory, and are less likely to hang. Selection mode also now shows checked state for visible files and subfolders under a checked folder.
+
 ## [2.5.2] - 2026-05-26
 
 - **Security hardening for Blueprint Studio APIs** — Restricted the Blueprint Studio backend, stream, and upload APIs to admin users to match the admin-only panel. Sensitive actions such as Home Assistant service calls, template rendering, global search/replace, file access, Git, SFTP, and uploads are no longer reachable by non-admin authenticated users. Git credential helpers no longer embed raw credentials into generated shell scripts or configure Git's plaintext credential store. Terminal SSH key auth now uses in-memory Paramiko sessions instead of writing private keys to disk, and legacy terminal command working directories are bounded to the Home Assistant config directory. API exception responses now return a generic error message while keeping full details in server logs. Reported by anonymous.

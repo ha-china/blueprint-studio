@@ -162,7 +162,7 @@ class SftpManager:
 
     # -- streaming tokens ----------------------------------------------------
 
-    def create_stream_token(self, host: str, port: int, username: str, auth: dict, path: str) -> dict:
+    def create_stream_token(self, host: str, port: int, username: str, auth: dict, path: str, stream_type: str = "file") -> dict:
         """Create a short-lived opaque token for GET-based media streaming."""
         token = secrets.token_urlsafe(32)
         expires_at = time.monotonic() + self._stream_token_ttl
@@ -173,13 +173,14 @@ class SftpManager:
                 "username": username,
                 "auth": auth,
                 "path": path,
+                "type": stream_type,
                 "expires_at": expires_at,
             }
         return {
             "success": True,
             "stream_id": token,
             "expires_in": self._stream_token_ttl,
-            "mime_type": mimetypes.guess_type(path)[0] or "application/octet-stream",
+            "mime_type": "application/zip" if stream_type == "folder_zip" else mimetypes.guess_type(path)[0] or "application/octet-stream",
         }
 
     def get_stream_token(self, token: str) -> dict | None:
@@ -530,6 +531,71 @@ class SftpManager:
                     zf.writestr(rel_path, data)
                 except Exception as e:
                     _LOGGER.warning("Skipping file %s in download_folder: %s", full_path, e)
+
+    def stream_folder_zip(self, host: str, port: int, username: str, auth: dict, path: str, write_chunk: Callable[[bytes], None]) -> dict:
+        """Write a remote folder ZIP incrementally to *write_chunk*."""
+        def op():
+            import zipfile
+
+            class _ChunkWriter:
+                def __init__(self, callback):
+                    self._callback = callback
+                    self._position = 0
+
+                def write(self, data):
+                    if data:
+                        self._callback(data)
+                        self._position += len(data)
+                    return len(data)
+
+                def tell(self):
+                    return self._position
+
+                def flush(self):
+                    return None
+
+            with self._get_connection(host, port, username, auth) as (_, sftp):
+                attr = sftp.stat(path)
+                if not stat.S_ISDIR(attr.st_mode):
+                    return {"success": False, "message": "Path is not a directory", "status_code": 400}
+
+                with zipfile.ZipFile(_ChunkWriter(write_chunk), "w", zipfile.ZIP_DEFLATED) as zf:
+                    self._zip_remote_dir_stream(sftp, path, path, zf)
+
+            return {"success": True}
+        return _sftp_safe_exec("stream_folder_zip", op)
+
+    def _zip_remote_dir_stream(self, sftp, base_path: str, current_path: str, zf):
+        """Recursively add remote directory contents to a streaming ZipFile."""
+        try:
+            entries = sftp.listdir_attr(current_path)
+        except Exception as e:
+            _LOGGER.warning("Skipping directory %s in stream_folder_zip: %s", current_path, e)
+            return
+
+        if not entries:
+            rel_dir = os.path.relpath(current_path, os.path.dirname(base_path)).replace("\\", "/").rstrip("/")
+            if rel_dir and rel_dir != ".":
+                zf.writestr(rel_dir + "/", b"")
+            return
+
+        for entry in entries:
+            full_path = current_path.rstrip("/") + "/" + entry.filename
+            rel_path = os.path.relpath(full_path, os.path.dirname(base_path)).replace("\\", "/")
+            if stat.S_ISDIR(entry.st_mode):
+                self._zip_remote_dir_stream(sftp, base_path, full_path, zf)
+                continue
+
+            try:
+                with sftp.open(full_path, "rb") as remote_fh:
+                    with zf.open(rel_path, "w") as zip_fh:
+                        while True:
+                            chunk = remote_fh.read(1024 * 1024)
+                            if not chunk:
+                                break
+                            zip_fh.write(chunk)
+            except Exception as e:
+                _LOGGER.warning("Skipping file %s in stream_folder_zip: %s", full_path, e)
 
     def _mkdir_recursive(self, sftp, path):
         """Helper to create remote directory recursively."""

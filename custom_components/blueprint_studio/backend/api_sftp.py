@@ -1,8 +1,11 @@
 """SFTP action dispatcher for Blueprint Studio API."""
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import queue
+import threading
 
 from aiohttp import web
 
@@ -34,7 +37,7 @@ async def sftp_action(sftp_manager, action: str, data: dict, hass, request=None)
         path = data.get("path")
         if not path:
             return json_message("Missing path", status_code=400)
-        result = sftp_manager.create_stream_token(host, port, username, auth, path)
+        result = sftp_manager.create_stream_token(host, port, username, auth, path, data.get("stream_type", "file"))
         return json_response(result)
 
     # --- sftp_serve_file: stream raw bytes with Range support ---
@@ -182,3 +185,72 @@ async def sftp_stream_file(sftp_manager, hass, request, host, port, username, au
     except Exception as exc:
         _LOGGER.error("sftp_stream_file failed: %s", exc, exc_info=True)
         return json_message("SFTP stream failed", status_code=500)
+
+
+async def sftp_stream_folder_zip(sftp_manager, hass, request, host, port, username, auth, path):
+    """Stream a remote SFTP folder as ZIP without base64 or full buffering."""
+    folder_name = os.path.basename(path.rstrip("/")) or "download"
+    loop = asyncio.get_running_loop()
+
+    chunks: queue.Queue[bytes | None] = queue.Queue(maxsize=8)
+    result_holder: dict = {}
+    stopped = threading.Event()
+
+    def write_chunk(chunk: bytes) -> None:
+        while not stopped.is_set():
+            try:
+                chunks.put(bytes(chunk), timeout=0.5)
+                return
+            except queue.Full:
+                continue
+        raise RuntimeError("SFTP folder ZIP stream cancelled")
+
+    def worker() -> None:
+        result_holder["result"] = sftp_manager.stream_folder_zip(
+            host, port, username, auth, path, write_chunk
+        )
+        while not stopped.is_set():
+            try:
+                chunks.put(None, timeout=0.5)
+                return
+            except queue.Full:
+                continue
+
+    thread = threading.Thread(target=worker, name="blueprint-sftp-zip-stream", daemon=True)
+    thread.start()
+
+    try:
+        first_chunk = await loop.run_in_executor(None, chunks.get)
+        if first_chunk is None:
+            thread.join(timeout=1)
+            result = result_holder.get("result", {})
+            if not result.get("success"):
+                return json_message(result.get("message", "SFTP folder ZIP stream failed"), status_code=result.get("status_code", 500))
+            first_chunk = b""
+
+        response = web.StreamResponse(headers={
+            "Content-Type": "application/zip",
+            "Content-Disposition": f'attachment; filename="{folder_name}.zip"',
+            "Cache-Control": "no-store",
+        })
+        await response.prepare(request)
+        if first_chunk:
+            await response.write(first_chunk)
+
+        while True:
+            chunk = await loop.run_in_executor(None, chunks.get)
+            if chunk is None:
+                break
+            await response.write(chunk)
+
+        thread.join(timeout=1)
+        result = result_holder.get("result", {})
+        if not result.get("success"):
+            _LOGGER.error("SFTP folder ZIP stream failed: %s", result.get("message", "Unknown error"))
+        await response.write_eof()
+        return response
+    except Exception as exc:
+        _LOGGER.error("sftp_stream_folder_zip failed: %s", exc, exc_info=True)
+        raise
+    finally:
+        stopped.set()

@@ -37,12 +37,36 @@ export function toggleSelectionMode() {
  * Handle selection change for a file/folder
  */
 export function handleSelectionChange(path, isSelected) {
+  const prefix = `${path.replace(/\/+$/, "")}/`;
   if (isSelected) {
+    for (const selectedPath of Array.from(state.selectedItems)) {
+      if (selectedPath.startsWith(prefix)) {
+        state.selectedItems.delete(selectedPath);
+      }
+    }
     state.selectedItems.add(path);
   } else {
     state.selectedItems.delete(path);
+    for (const selectedPath of Array.from(state.selectedItems)) {
+      if (selectedPath.startsWith(prefix)) {
+        state.selectedItems.delete(selectedPath);
+      }
+    }
   }
   updateSelectionCount();
+}
+
+export function isItemSelected(path) {
+  if (!path) return false;
+  if (state.selectedItems.has(path)) return true;
+
+  const isSftp = path.startsWith("sftp://");
+  for (const selectedPath of state.selectedItems) {
+    if (isSftp !== selectedPath.startsWith("sftp://")) continue;
+    const prefix = `${selectedPath.replace(/\/+$/, "")}/`;
+    if (path.startsWith(prefix)) return true;
+  }
+  return false;
 }
 
 /**

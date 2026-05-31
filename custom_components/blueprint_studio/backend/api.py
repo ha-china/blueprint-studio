@@ -357,6 +357,17 @@ class BlueprintStudioStreamView(HomeAssistantView):
             stream_data = self.sftp.get_stream_token(stream_id)
             if not stream_data:
                 return web.Response(status=404, text="Stream not found or expired")
+            if stream_data.get("type") == "folder_zip":
+                return await api_sftp.sftp_stream_folder_zip(
+                    self.sftp,
+                    hass,
+                    request,
+                    stream_data["host"],
+                    stream_data["port"],
+                    stream_data["username"],
+                    stream_data["auth"],
+                    stream_data["path"],
+                )
             return await api_sftp.sftp_stream_file(
                 self.sftp,
                 hass,
