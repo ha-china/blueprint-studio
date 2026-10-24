@@ -255,7 +255,7 @@ class HAMetadataManager:
             if name == "devices":
                 from homeassistant.helpers import device_registry as module
 
-                values = module.async_get(self.hass).devices.values()
+                dev_reg = module.async_get(self.hass)
                 records = [
                     {
                         "id": item.id,
@@ -263,7 +263,11 @@ class HAMetadataManager:
                         "manufacturer": item.manufacturer,
                         "model": item.model,
                     }
-                    for item in values
+                    for item in (
+                        dev_reg.async_get(d) if isinstance(d, str) else d
+                        for d in dev_reg.devices
+                    )
+                    if item is not None
                 ]
             elif name == "areas":
                 from homeassistant.helpers import area_registry as module

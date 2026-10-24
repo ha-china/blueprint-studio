@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [3.0.3] - 2026-10-24
+
+### Fixed
+
+- **Home Assistant Device Registry deprecation** - Device enumeration in metadata and API endpoints now iterates `device_registry.devices` directly instead of calling the deprecated `.values()` mapping method, eliminating deprecation warnings and ensuring forward compatibility with Home Assistant 2027.9.0+ while preserving backward compatibility for older Home Assistant versions.
+- **iPhone toolbar and drawer positioning** - Embedded Home Assistant panels no longer apply the iOS top safe area a second time, preventing clipped toolbar icons and excess space above mobile sidebars. Standalone PWA installs still receive the required safe-area padding.
+
+
 ## [3.0.2] - 2026-08-27
 
 ### Fixed
@@ -1126,7 +1134,8 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 - **1.2.0** - GitHub Integration, Pin Favorites & Auto-Refresh
 - **1.0.0** - First stable release
 
-[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.2...HEAD
+[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.3...HEAD
+[3.0.3]: https://github.com/ha-china/blueprint-studio/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/ha-china/blueprint-studio/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/ha-china/blueprint-studio/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/ha-china/blueprint-studio/releases/tag/v3.0.0

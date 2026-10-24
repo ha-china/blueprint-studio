@@ -5198,6 +5198,24 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('grid-template-columns: 32px minmax(0, 1fr) 44px 44px 44px auto', responsive)
         self.assertIn("if (!state.activeTab || !state.editor)", search)
 
+    def test_embedded_phone_toolbar_does_not_double_apply_ios_safe_area(self):
+        styles = ROOT / "custom_components" / "blueprint_studio" / "www" / "styles" / "modules"
+        layout = (styles / "layout.css").read_text(encoding="utf-8")
+        base = (styles / "base.css").read_text(encoding="utf-8")
+        responsive = (styles / "responsive.css").read_text(encoding="utf-8")
+
+        self.assertNotIn("padding-top: max(4px, env(safe-area-inset-top));", layout)
+        self.assertIn("--panel-safe-area-top: 0px", base)
+        self.assertRegex(
+            responsive,
+            r"@media \(display-mode: standalone\) and \(max-width: 768px\) \{[\s\S]*?"
+            r"--panel-safe-area-top: env\(safe-area-inset-top, 0px\);[\s\S]*?"
+            r"min-height: calc\(38px \+ var\(--panel-safe-area-top\)\);[\s\S]*?"
+            r"padding-top: var\(--panel-safe-area-top\);",
+        )
+        self.assertIn("padding-top: var(--panel-safe-area-top);", responsive)
+        self.assertNotRegex(responsive, r"\.toolbar \{[\s\S]{0,180}?max-height:\s*(?:40|42)px")
+
     def test_shared_constants_imports_do_not_use_cache_busting_tokens(self):
         modules = ROOT / "custom_components" / "blueprint_studio" / "www" / "modules"
         for module_path in modules.rglob("*.js"):

@@ -59,7 +59,9 @@ def test_repository_init_unstages_ignored_files_before_the_first_commit():
     assert "await self._unstage_ignored_files_before_first_commit()" in source
     assert '["rev-parse", "--verify", "HEAD"]' in source
     assert '["ls-files", "--cached", "--ignored", "--exclude-standard", "-z"]' in source
-    assert '["rm", "-r", "--cached", "--ignore-unmatch", "--", *ignored_paths]' in source
+    assert (
+        '["rm", "-r", "--cached", "--ignore-unmatch", "--", *ignored_paths]' in source
+    )
     assert '"*.db-*\\n"' in source
     assert '"*.sqlite*\\n"' in source
 

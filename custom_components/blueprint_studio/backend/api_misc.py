@@ -346,7 +346,11 @@ async def get_devices(hass):
 
         dev_reg = dr.async_get(hass)
         devices = []
-        for d in dev_reg.devices.values():
+        for d in dev_reg.devices:
+            if isinstance(d, str):
+                d = dev_reg.async_get(d)
+            if d is None:
+                continue
             identifiers = list(d.identifiers) if d.identifiers else []
             integration = identifiers[0][0] if identifiers else None
             devices.append(

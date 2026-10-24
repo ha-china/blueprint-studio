@@ -324,7 +324,7 @@
 
     body[data-workspace-mode="phone"] .modal-header {
       min-height: 56px;
-      padding: max(6px, env(safe-area-inset-top)) 12px 6px 16px;
+      padding: max(6px, var(--panel-safe-area-top)) 12px 6px 16px;
     }
 
     body[data-workspace-mode="phone"] .modal-body {
@@ -688,15 +688,13 @@
 
       .toolbar {
         padding: 0 4px;
-        padding-top: env(safe-area-inset-top, 2px);
-        padding-bottom: 0;
         overflow-x: auto;
         overflow-y: hidden;
         flex-wrap: nowrap !important;
         -webkit-overflow-scrolling: touch;
         gap: 1px;
         min-height: 38px;
-        max-height: 42px;
+        max-height: none;
         flex-shrink: 0;
         scrollbar-width: none;
         -ms-overflow-style: none;
@@ -829,7 +827,7 @@
         box-shadow: 2px 0 15px rgba(0, 0, 0, 0.5);
         z-index: 2000;
         background: var(--bg-secondary);
-        padding-top: env(safe-area-inset-top);
+        padding-top: var(--panel-safe-area-top);
         padding-bottom: env(safe-area-inset-bottom);
         transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
@@ -874,7 +872,7 @@
 
       /* Fix header overlapping status bar in PWA */
       .header {
-        padding-top: env(safe-area-inset-top);
+        padding-top: var(--panel-safe-area-top);
         height: auto;
         min-height: 48px;
       }
@@ -1484,6 +1482,20 @@
       }
     }
 
+    /* Home Assistant already positions an embedded panel below the iOS safe
+       area. Only a standalone install owns the full viewport and needs to add
+       the top inset itself. Its height must grow with that inset. */
+    @media (display-mode: standalone) and (max-width: 768px) {
+      :root {
+        --panel-safe-area-top: env(safe-area-inset-top, 0px);
+      }
+
+      .toolbar {
+        min-height: calc(38px + var(--panel-safe-area-top));
+        padding-top: var(--panel-safe-area-top);
+      }
+    }
+
     /* Mobile shortcuts overlay - additional mobile styles */
     @media (max-width: 768px) {
       .shortcuts-modal {
@@ -1538,7 +1550,7 @@
 
       .toolbar {
         min-height: 38px;
-        max-height: 40px;
+        max-height: none;
       }
 
       .toolbar-btn {

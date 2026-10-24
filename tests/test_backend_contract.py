@@ -155,5 +155,18 @@ class PwaCacheContractTests(unittest.TestCase):
         self.assertIn("async def get(self, request: web.Request, path: str)", integration)
 
 
+class DeviceRegistryContractTests(unittest.TestCase):
+    def test_device_registry_devices_mapping_values_not_called(self):
+        backend_dir = ROOT / "custom_components" / "blueprint_studio" / "backend"
+        for py_path in backend_dir.glob("*.py"):
+            tree = ast.parse(py_path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Attribute) and node.attr == "values":
+                    if isinstance(node.value, ast.Attribute) and node.value.attr == "devices":
+                        self.fail(
+                            f"Deprecated `.devices.values()` found in {py_path.name} at line {node.lineno}"
+                        )
+
+
 if __name__ == "__main__":
     unittest.main()

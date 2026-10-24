@@ -457,7 +457,6 @@
       display: flex;
       align-items: center;
       padding: 4px 8px;
-      padding-top: max(4px, env(safe-area-inset-top));
       padding-left: max(8px, var(--safe-area-left));
       padding-right: max(8px, var(--safe-area-right));
       background: var(--bg-secondary);
