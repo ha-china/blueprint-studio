@@ -262,55 +262,71 @@ class FileManager:
         return unsubscribe
 
     def get_tree_snapshot(self, show_hidden: bool = False) -> dict:
-        """Return a lightweight signature for visible file-tree contents."""
+        """Return a lightweight signature for visible file-tree contents.
+
+        Designed to detect structural additions, deletions, and renames (e.g.
+        files created in terminal) without triggering false-positive tree reloads
+        from rapidly-updating runtime files (logs, databases, WAL, .storage).
+        """
         root_dir = self._get_root_dir()
         digest = hashlib.blake2b(digest_size=16)
         count = 0
-        latest_mtime = 0
+
+        # Suffixes/names of volatile files that should not trigger tree reloads
+        volatile_file_suffixes = (
+            "-wal",
+            "-shm",
+            ".log",
+            ".tmp",
+            ".swp",
+            ".swo",
+            "~",
+        )
+        # Directories that should always be ignored for tree snapshot signatures
+        snapshot_ignored_dirs = EXCLUDED_PATTERNS | {".storage", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
 
         for root, dirs, files in os.walk(root_dir):
             if not show_hidden:
-                dirs[:] = [d for d in dirs if d not in EXCLUDED_PATTERNS and not d.startswith(".")]
+                dirs[:] = [
+                    d for d in dirs
+                    if d not in snapshot_ignored_dirs and not d.startswith(".")
+                ]
             else:
-                dirs[:] = [d for d in dirs if d not in EXCLUDED_PATTERNS]
+                dirs[:] = [
+                    d for d in dirs
+                    if d not in snapshot_ignored_dirs
+                ]
 
             rel_root = Path(root).relative_to(root_dir)
 
             for name in sorted(dirs):
-                item_path = Path(root) / name
                 rel_path = str(rel_root / name if str(rel_root) != "." else name)
-                try:
-                    stat_result = item_path.stat()
-                except OSError:
-                    continue
-                digest.update(f"d:{rel_path}:{stat_result.st_mtime_ns}".encode("utf-8", "surrogateescape"))
+                digest.update(f"d:{rel_path}\n".encode("utf-8", "surrogateescape"))
                 count += 1
-                latest_mtime = max(latest_mtime, stat_result.st_mtime_ns)
 
             for name in sorted(files):
-                if (not show_hidden and name.startswith(".")):
+                if not show_hidden and name.startswith("."):
                     continue
+                lower_name = name.lower()
+                # Skip volatile runtime files (logs, SQLite WAL/SHM, tmp files)
+                if (
+                    lower_name.startswith("home-assistant.log")
+                    or lower_name.endswith(volatile_file_suffixes)
+                ):
+                    continue
+
                 item_path = Path(root) / name
                 if not self._is_listed_file(item_path):
                     continue
                 rel_path = str(rel_root / name if str(rel_root) != "." else name)
-                try:
-                    stat_result = item_path.stat()
-                except OSError:
-                    continue
-                digest.update(
-                    f"f:{rel_path}:{stat_result.st_mtime_ns}:{stat_result.st_size}".encode(
-                        "utf-8", "surrogateescape"
-                    )
-                )
+                digest.update(f"f:{rel_path}\n".encode("utf-8", "surrogateescape"))
                 count += 1
-                latest_mtime = max(latest_mtime, stat_result.st_mtime_ns)
 
         return {
             "success": True,
             "signature": digest.hexdigest(),
             "count": count,
-            "latest_mtime": latest_mtime,
+            "latest_mtime": 0,
         }
 
     def list_files(self, show_hidden: bool = False) -> list[dict]:

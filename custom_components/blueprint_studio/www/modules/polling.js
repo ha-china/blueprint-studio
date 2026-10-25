@@ -80,7 +80,6 @@ export async function checkFileTreeSnapshot() {
     const signature = `${state.showHidden}:${response.signature}`;
     if (lastFileTreeSnapshot === null) {
       lastFileTreeSnapshot = signature;
-      eventBus.emit('ui:reload-files', { force: true });
       return;
     }
 
