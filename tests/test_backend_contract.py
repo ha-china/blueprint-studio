@@ -168,5 +168,28 @@ class DeviceRegistryContractTests(unittest.TestCase):
                         )
 
 
+class HomeAssistantDeprecationContractTests(unittest.TestCase):
+    def test_hass_loop_not_accessed_in_backend(self):
+        backend_dir = ROOT / "custom_components" / "blueprint_studio" / "backend"
+        for py_path in backend_dir.glob("*.py"):
+            tree = ast.parse(py_path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Attribute) and node.attr == "loop":
+                    if isinstance(node.value, ast.Attribute) and node.value.attr == "hass":
+                        self.fail(
+                            f"Deprecated `hass.loop` access found in {py_path.name} at line {node.lineno}"
+                        )
+                    if isinstance(node.value, ast.Name) and node.value.id == "hass":
+                        self.fail(
+                            f"Deprecated `hass.loop` access found in {py_path.name} at line {node.lineno}"
+                        )
+
+    def test_git_credentials_not_stored_in_hass_data(self):
+        git_mgr_path = ROOT / "custom_components" / "blueprint_studio" / "backend" / "git_manager.py"
+        source = git_mgr_path.read_text(encoding="utf-8")
+        self.assertNotIn('self.hass.data[DOMAIN]["git_credentials"]', source)
+        self.assertNotIn('hass.data[DOMAIN]["git_credentials"]', source)
+
+
 if __name__ == "__main__":
     unittest.main()

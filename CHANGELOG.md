@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [3.0.4] - 2026-10-27
+
+### Fixed
+
+- **Home Assistant Event Loop deprecation (`hass.loop`)** - Replaced deprecated access to `hass.loop` with `asyncio.get_running_loop()` in metadata refresh subscriptions, terminal WebSocket reader loops, and terminal session initialization, eliminating deprecation warnings on Home Assistant 2026.10+ and preparing for future Home Assistant 2027 releases.
+- **Forward-compatible Area, Label, and Floor registry queries** - Upgraded area, label, and floor registry queries in metadata snapshots and API helpers to prefer official public API methods (`async_list_areas()`, `async_list_labels()`, `async_list_floors()`) with resilient fallback to collection and mapping values, preventing future registry deprecations.
+- **Orphaned Git credentials in global state** - Removed untyped in-memory mutations to `hass.data[DOMAIN]["git_credentials"]` in Git management. Credentials are now managed and persisted exclusively via `BlueprintStudioStore` and entry storage.
+- **Modern config entry unload lifecycle** - Updated `async_unload_entry` to resolve `BlueprintStudioRuntime` directly from `entry.runtime_data` rather than legacy global dictionary lookups.
+- **File tree stability with volatile runtime files** - File-tree snapshot signatures now ignore rapidly updating runtime files (such as SQLite WAL/SHM sidecars, `home-assistant.log`, and temporary files) and cache directories, preventing unexpected file-tree reloads while typing or navigating.
+
+
 ## [3.0.3] - 2026-10-24
 
 ### Fixed
@@ -1134,7 +1145,8 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 - **1.2.0** - GitHub Integration, Pin Favorites & Auto-Refresh
 - **1.0.0** - First stable release
 
-[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.3...HEAD
+[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.4...HEAD
+[3.0.4]: https://github.com/ha-china/blueprint-studio/compare/v3.0.3...v3.0.4
 [3.0.3]: https://github.com/ha-china/blueprint-studio/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/ha-china/blueprint-studio/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/ha-china/blueprint-studio/compare/v3.0.0...v3.0.1

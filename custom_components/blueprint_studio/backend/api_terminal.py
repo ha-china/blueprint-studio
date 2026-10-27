@@ -75,6 +75,10 @@ async def handle_terminal_ws(request, user, hass, terminal_manager):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = getattr(hass, "loop", None)
+    try:
         session = terminal_manager.create_session(ws)
     except RuntimeError:
         await ws.close(code=1001, message=b"Integration unloading")
@@ -122,23 +126,23 @@ async def handle_terminal_ws(request, user, hass, terminal_manager):
                     hass.async_create_task(ws.send_bytes(data))
                 except Exception as e:
                     _LOGGER.warning("Failed to send terminal data to WS: %s", e)
-                    hass.loop.remove_reader(master_fd)
+                    loop.remove_reader(master_fd)
                     hass.async_create_task(ws.close())
             else:
                 _LOGGER.info("Terminal PTY EOF - shell process has exited")
-                hass.loop.remove_reader(master_fd)
+                loop.remove_reader(master_fd)
                 hass.async_create_task(ws.close())
         except OSError as e:
             if e.errno != 5:
                 _LOGGER.warning("Terminal PTY Read Error (errno %s): %s", e.errno, e)
-            hass.loop.remove_reader(master_fd)
+            loop.remove_reader(master_fd)
             hass.async_create_task(ws.close())
         except Exception as e:
             _LOGGER.error("Unexpected error in terminal reader: %s", e)
-            hass.loop.remove_reader(master_fd)
+            loop.remove_reader(master_fd)
             hass.async_create_task(ws.close())
 
-    hass.loop.add_reader(master_fd, forward_output)
+    loop.add_reader(master_fd, forward_output)
     try:
         async for msg in ws:
             try:
@@ -156,7 +160,7 @@ async def handle_terminal_ws(request, user, hass, terminal_manager):
                                 old_master_fd = master_fd
                                 old_pid = pid
 
-                                hass.loop.remove_reader(old_master_fd)
+                                loop.remove_reader(old_master_fd)
                                 session.close_pty()
 
                                 try:
@@ -168,7 +172,7 @@ async def handle_terminal_ws(request, user, hass, terminal_manager):
                                         key_passphrase=ssh_config.get('privateKeyPassphrase')
                                     )
                                     session.set_pty(master_fd, pid)
-                                    hass.loop.add_reader(master_fd, forward_output)
+                                    loop.add_reader(master_fd, forward_output)
                                     # Reset application cursor key mode so arrow keys work correctly
                                     await ws.send_str('\x1b[?1l\x1b[?7h')
                                     _LOGGER.info("SSH PTY spawned successfully")
@@ -177,7 +181,7 @@ async def handle_terminal_ws(request, user, hass, terminal_manager):
                                     await ws.send_str(f"Error: SSH connection failed: {str(spawn_error)}\r\n")
                                     master_fd, pid = await spawn_pty()
                                     session.set_pty(master_fd, pid)
-                                    hass.loop.add_reader(master_fd, forward_output)
+                                    loop.add_reader(master_fd, forward_output)
                             except (json.JSONDecodeError, ValueError) as e:
                                 _LOGGER.error("Invalid SSH key command format: %s", e)
                                 await ws.send_str("Error: Invalid SSH authentication configuration\r\n")
@@ -191,7 +195,7 @@ async def handle_terminal_ws(request, user, hass, terminal_manager):
                                 old_master_fd = master_fd
                                 old_pid = pid
 
-                                hass.loop.remove_reader(old_master_fd)
+                                loop.remove_reader(old_master_fd)
                                 session.close_pty()
 
                                 try:
@@ -202,7 +206,7 @@ async def handle_terminal_ws(request, user, hass, terminal_manager):
                                         password=ssh_config.get('password')
                                     )
                                     session.set_pty(master_fd, pid)
-                                    hass.loop.add_reader(master_fd, forward_output)
+                                    loop.add_reader(master_fd, forward_output)
                                     # Reset application cursor key mode so arrow keys work correctly
                                     await ws.send_str('\x1b[?1l\x1b[?7h')
                                     _LOGGER.info("SSH PTY with password spawned successfully")
@@ -211,7 +215,7 @@ async def handle_terminal_ws(request, user, hass, terminal_manager):
                                     await ws.send_str(f"Error: SSH connection failed: {str(spawn_error)}\r\n")
                                     master_fd, pid = await spawn_pty()
                                     session.set_pty(master_fd, pid)
-                                    hass.loop.add_reader(master_fd, forward_output)
+                                    loop.add_reader(master_fd, forward_output)
                             except (json.JSONDecodeError, ValueError) as e:
                                 _LOGGER.error("Invalid SSH password command format: %s", e)
                                 await ws.send_str("Error: Invalid SSH authentication configuration\r\n")

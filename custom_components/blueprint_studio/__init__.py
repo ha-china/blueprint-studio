@@ -293,14 +293,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    runtime = hass.data[DOMAIN].get(entry.entry_id)
+    runtime = getattr(entry, "runtime_data", None) or hass.data.get(DOMAIN, {}).get(entry.entry_id)
     if isinstance(runtime, BlueprintStudioRuntime):
-        registration = hass.data[DOMAIN].get(_REGISTRATION_KEY)
+        registration = hass.data.get(DOMAIN, {}).get(_REGISTRATION_KEY)
         if isinstance(registration, BlueprintStudioGlobalRegistration):
             registration.deactivate(runtime)
             if registration.panel_registered:
                 frontend.async_remove_panel(hass, DOMAIN)
                 registration.panel_registered = False
         await runtime.async_shutdown()
-    hass.data[DOMAIN].pop(entry.entry_id, None)
+    if DOMAIN in hass.data:
+        hass.data[DOMAIN].pop(entry.entry_id, None)
     return True

@@ -378,7 +378,11 @@ async def get_areas(hass):
         from homeassistant.helpers import area_registry as ar
 
         area_reg = ar.async_get(hass)
-        areas = [{"id": a.id, "name": a.name} for a in area_reg.areas.values()]
+        if hasattr(area_reg, "async_list_areas"):
+            entries = area_reg.async_list_areas()
+        else:
+            entries = area_reg.areas.values() if hasattr(area_reg.areas, "values") else area_reg.areas
+        areas = [{"id": a.id, "name": a.name} for a in entries if a is not None]
         _HassCache.set("areas", areas)
         return json_response({"success": True, "areas": areas})
     except Exception as e:
@@ -392,8 +396,12 @@ async def get_labels(hass):
         from homeassistant.helpers import label_registry as lr
 
         label_reg = lr.async_get(hass)
+        if hasattr(label_reg, "async_list_labels"):
+            entries = label_reg.async_list_labels()
+        else:
+            entries = label_reg.labels.values() if hasattr(label_reg.labels, "values") else label_reg.labels
         labels = [
-            {"id": lb.label_id, "name": lb.name} for lb in label_reg.labels.values()
+            {"id": lb.label_id, "name": lb.name} for lb in entries if lb is not None
         ]
         return json_response({"success": True, "labels": labels})
     except Exception as e:
@@ -407,7 +415,11 @@ async def get_floors(hass):
         from homeassistant.helpers import floor_registry as fr
 
         floor_reg = fr.async_get(hass)
-        floors = [{"id": f.floor_id, "name": f.name} for f in floor_reg.floors.values()]
+        if hasattr(floor_reg, "async_list_floors"):
+            entries = floor_reg.async_list_floors()
+        else:
+            entries = floor_reg.floors.values() if hasattr(floor_reg.floors, "values") else floor_reg.floors
+        floors = [{"id": f.floor_id, "name": f.name} for f in entries if f is not None]
         return json_response({"success": True, "floors": floors})
     except Exception as e:
         _LOGGER.debug("get_floors failed: %s", e)

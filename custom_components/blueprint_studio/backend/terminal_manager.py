@@ -159,7 +159,19 @@ class TerminalManager:
         """Register a live terminal session."""
         if self._closing:
             raise RuntimeError("Terminal manager is shutting down")
-        session = TerminalSession(self.hass.loop, websocket)
+        if type(self.hass).__name__ == "HomeAssistant":
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = getattr(self.hass, "loop", None)
+        else:
+            loop = getattr(self.hass, "loop", None)
+            if loop is None:
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    pass
+        session = TerminalSession(loop, websocket)
         self._sessions.add(session)
         return session
 

@@ -580,12 +580,6 @@ class GitManager:
                     del self.data["credentials"]
                 await self.store.async_save(self.data)
             
-            if DOMAIN not in self.hass.data: self.hass.data[DOMAIN] = {}
-            if "git_credentials" not in self.hass.data[DOMAIN]: self.hass.data[DOMAIN]["git_credentials"] = {}
-            
-            # Store in memory by provider
-            self.hass.data[DOMAIN]["git_credentials"][provider] = {"username": username, "token": token}
-            
             await self.hass.async_add_executor_job(self._run_git_command, ["config", "user.name", username])
             # Default email logic
             email_host = "users.noreply.github.com" if provider == "github" else "localhost" 
@@ -603,10 +597,6 @@ class GitManager:
             if provider == "github" and "credentials" in self.data: del self.data["credentials"]
             
             await self.store.async_save(self.data)
-            
-            if DOMAIN in self.hass.data and "git_credentials" in self.hass.data[DOMAIN]:
-                if provider in self.hass.data[DOMAIN]["git_credentials"]:
-                    del self.hass.data[DOMAIN]["git_credentials"][provider]
             
             await self.hass.async_add_executor_job(self._run_git_command, ["config", "--unset", "credential.helper"])
             return json_response({"success": True, "message": "Successfully signed out"})

@@ -185,7 +185,14 @@ class HAMetadataManager:
 
     def _handle_event(self, _event) -> None:
         self._updated = 0.0
-        self.hass.loop.call_soon_threadsafe(self._schedule_refresh)
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = getattr(self.hass, "loop", None)
+        if loop is not None:
+            loop.call_soon_threadsafe(self._schedule_refresh)
+        else:
+            self._schedule_refresh()
 
     def _schedule_refresh(self) -> None:
         """Create one refresh task after crossing onto Home Assistant's loop."""
@@ -272,18 +279,30 @@ class HAMetadataManager:
             elif name == "areas":
                 from homeassistant.helpers import area_registry as module
 
-                values = module.async_get(self.hass).areas.values()
-                records = [{"id": item.id, "name": item.name} for item in values]
+                area_reg = module.async_get(self.hass)
+                if hasattr(area_reg, "async_list_areas"):
+                    entries = area_reg.async_list_areas()
+                else:
+                    entries = area_reg.areas.values() if hasattr(area_reg.areas, "values") else area_reg.areas
+                records = [{"id": item.id, "name": item.name} for item in entries if item is not None]
             elif name == "labels":
                 from homeassistant.helpers import label_registry as module
 
-                values = module.async_get(self.hass).labels.values()
-                records = [{"id": item.label_id, "name": item.name} for item in values]
+                label_reg = module.async_get(self.hass)
+                if hasattr(label_reg, "async_list_labels"):
+                    entries = label_reg.async_list_labels()
+                else:
+                    entries = label_reg.labels.values() if hasattr(label_reg.labels, "values") else label_reg.labels
+                records = [{"id": item.label_id, "name": item.name} for item in entries if item is not None]
             else:
                 from homeassistant.helpers import floor_registry as module
 
-                values = module.async_get(self.hass).floors.values()
-                records = [{"id": item.floor_id, "name": item.name} for item in values]
+                floor_reg = module.async_get(self.hass)
+                if hasattr(floor_reg, "async_list_floors"):
+                    entries = floor_reg.async_list_floors()
+                else:
+                    entries = floor_reg.floors.values() if hasattr(floor_reg.floors, "values") else floor_reg.floors
+                records = [{"id": item.floor_id, "name": item.name} for item in entries if item is not None]
             return _bounded(records, name, "id")
 
         (
