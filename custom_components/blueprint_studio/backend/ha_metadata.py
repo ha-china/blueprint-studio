@@ -185,6 +185,7 @@ class HAMetadataManager:
 
     def _handle_event(self, _event) -> None:
         self._updated = 0.0
+        loop: Any
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
