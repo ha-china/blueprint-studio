@@ -283,8 +283,16 @@ class HAMetadataManager:
                 if hasattr(area_reg, "async_list_areas"):
                     entries = area_reg.async_list_areas()
                 else:
-                    entries = area_reg.areas.values() if hasattr(area_reg.areas, "values") else area_reg.areas
-                records = [{"id": item.id, "name": item.name} for item in entries if item is not None]
+                    entries = (
+                        area_reg.areas.values()
+                        if hasattr(area_reg.areas, "values")
+                        else area_reg.areas
+                    )
+                records = [
+                    {"id": item.id, "name": item.name}
+                    for item in entries
+                    if item is not None
+                ]
             elif name == "labels":
                 from homeassistant.helpers import label_registry as module
 
@@ -292,8 +300,16 @@ class HAMetadataManager:
                 if hasattr(label_reg, "async_list_labels"):
                     entries = label_reg.async_list_labels()
                 else:
-                    entries = label_reg.labels.values() if hasattr(label_reg.labels, "values") else label_reg.labels
-                records = [{"id": item.label_id, "name": item.name} for item in entries if item is not None]
+                    entries = (
+                        label_reg.labels.values()
+                        if hasattr(label_reg.labels, "values")
+                        else label_reg.labels
+                    )
+                records = [
+                    {"id": item.label_id, "name": item.name}
+                    for item in entries
+                    if item is not None
+                ]
             else:
                 from homeassistant.helpers import floor_registry as module
 
@@ -301,8 +317,16 @@ class HAMetadataManager:
                 if hasattr(floor_reg, "async_list_floors"):
                     entries = floor_reg.async_list_floors()
                 else:
-                    entries = floor_reg.floors.values() if hasattr(floor_reg.floors, "values") else floor_reg.floors
-                records = [{"id": item.floor_id, "name": item.name} for item in entries if item is not None]
+                    entries = (
+                        floor_reg.floors.values()
+                        if hasattr(floor_reg.floors, "values")
+                        else floor_reg.floors
+                    )
+                records = [
+                    {"id": item.floor_id, "name": item.name}
+                    for item in entries
+                    if item is not None
+                ]
             return _bounded(records, name, "id")
 
         (
