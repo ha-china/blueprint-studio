@@ -60,6 +60,7 @@ dmypy.json
 !/tests/js/
 !/tests/js/ai_modes.mjs
 /scripts/*
+!/scripts/bundle_assets.mjs
 !/scripts/audit_frontend_release.mjs
 !/scripts/audit_frontend_ownership.mjs
 !/scripts/audit_frontend_scoped_wiring.mjs

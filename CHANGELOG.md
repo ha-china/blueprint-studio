@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [3.0.5] - 2026-11-02
+
+### Fixed
+
+- **Reverse proxy and WAF rate-limiting on startup (`429 Too Many Requests`)** - Bundled CodeMirror editor scripts, CodeMirror stylesheets, and Blueprint Studio modular stylesheets into consolidated asset bundles, eliminating 46 individual parallel HTTP requests during panel startup and preventing reverse proxies (such as Pangolin, Cloudflare, and Nginx) from rejecting assets due to burst limits.
+- **Recoverable frontend initialization failures** - Added an error card with a dedicated "Retry" button when dynamic module imports fail on startup, preventing an indefinite blurred loading overlay if a network interruption or proxy rate limit occurs.
+
+
 ## [3.0.4] - 2026-10-27
 
 ### Fixed
@@ -1145,7 +1153,8 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 - **1.2.0** - GitHub Integration, Pin Favorites & Auto-Refresh
 - **1.0.0** - First stable release
 
-[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.4...HEAD
+[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.5...HEAD
+[3.0.5]: https://github.com/ha-china/blueprint-studio/compare/v3.0.4...v3.0.5
 [3.0.4]: https://github.com/ha-china/blueprint-studio/compare/v3.0.3...v3.0.4
 [3.0.3]: https://github.com/ha-china/blueprint-studio/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/ha-china/blueprint-studio/compare/v3.0.1...v3.0.2

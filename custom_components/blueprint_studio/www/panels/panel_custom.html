@@ -12,17 +12,8 @@
   <link rel="apple-touch-icon" href="/blueprint_studio/assets/icon.png">
   <link rel="preload" href="/blueprint_studio/assets/fonts/material-icons.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- CodeMirror (local) -->
-  <link rel="stylesheet" href="/blueprint_studio/assets/vendor/codemirror/css/codemirror.min.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/vendor/codemirror/css/lint.min.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/vendor/codemirror/css/dialog.min.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/vendor/codemirror/css/foldgutter.min.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/vendor/codemirror/css/show-hint.min.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/vendor/codemirror/css/merge.min.css?v={{VERSION}}">
-
-  <!-- Themes -->
-  <link rel="stylesheet" href="/blueprint_studio/assets/vendor/codemirror/css/material-darker.min.css?v={{VERSION}}">
-  <!-- Note: "default" theme is built into codemirror.min.css, no separate file needed -->
+  <!-- CodeMirror (bundled) -->
+  <link rel="stylesheet" href="/blueprint_studio/assets/vendor/codemirror/codemirror.bundle.css?v={{VERSION}}">
 
   <!-- GitHub Octicons (for Git features, local) -->
   <link href="/blueprint_studio/assets/vendor/octicons/octicons.css?v={{VERSION}}" rel="stylesheet">
@@ -30,53 +21,14 @@
   <!-- Code Editor Fonts (local) -->
   <link rel="stylesheet" href="/blueprint_studio/assets/fonts/code/code-fonts.css?v={{VERSION}}">
 
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/codemirror.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/yaml.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/javascript.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/python.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/clike.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/css.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/xml.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/htmlmixed.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/markdown.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/shell.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/lint.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/matchbrackets.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/closebrackets.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/search.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/searchcursor.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/jump-to-line.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/dialog.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/foldcode.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/foldgutter.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/indent-fold.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/brace-fold.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/comment.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/active-line.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/show-hint.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/anyword-hint.min.js?v={{VERSION}}"></script>
-  <script src="/blueprint_studio/assets/vendor/codemirror/js/overlay.min.js?v={{VERSION}}"></script>
+  <!-- CodeMirror Scripts (bundled) -->
+  <script src="/blueprint_studio/assets/vendor/codemirror/codemirror.bundle.js?v={{VERSION}}"></script>
 
   <!-- Highlight.js for Markdown Code Blocks (local) -->
   <link rel="stylesheet" href="/blueprint_studio/assets/vendor/highlight/github-dark.min.css?v={{VERSION}}">
 
-  <!-- Blueprint Studio Styles (modular) -->
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/base.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/primitives.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/layout.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/file-tree.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/editor.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/codemirror.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/ai.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/git.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/sftp.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/ui-components.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/previews.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/welcome.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/themes.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/responsive.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/user-guide.css?v={{VERSION}}">
-  <link rel="stylesheet" href="/blueprint_studio/assets/styles/modules/accessibility.css?v={{VERSION}}">
+  <!-- Blueprint Studio Styles (bundled) -->
+  <link rel="stylesheet" href="/blueprint_studio/assets/styles/blueprint-studio.bundle.css?v={{VERSION}}">
 </head>
 <body>
   <!-- ... existing body ... -->

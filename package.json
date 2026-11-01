@@ -5,7 +5,9 @@
   "scripts": {
     "test:frontend:playwright": "node scripts/audit_frontend_playwright.mjs",
     "test:frontend:ai-modes": "node scripts/audit_frontend_ai_modes.mjs",
-    "test:frontend:ai-mode-wiring": "node tests/js/ai_modes.mjs"
+    "test:frontend:ai-mode-wiring": "node tests/js/ai_modes.mjs",
+    "bundle:assets": "node scripts/bundle_assets.mjs",
+    "build": "node scripts/bundle_assets.mjs"
   },
   "devDependencies": {
     "playwright-core": "1.62.1"

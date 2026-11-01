@@ -56,6 +56,31 @@ async function initApp() {
     await init();
   } catch (error) {
     console.error('Failed to initialize app:', error);
+    const loadingText = document.getElementById('loading-text');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingText && loadingOverlay) {
+      loadingText.innerHTML = `
+        <div style="margin-top: 12px; color: #ff6b6b; font-size: 14px; font-weight: 500;">
+          Failed to load Blueprint Studio
+        </div>
+        <div style="margin-top: 6px; color: #aaa; font-size: 12px; max-width: 320px; word-break: break-word;">
+          ${error?.message || error}
+        </div>
+        <button onclick="location.reload()" style="
+          margin-top: 16px;
+          padding: 8px 20px;
+          background: #0e639c;
+          border: none;
+          border-radius: 4px;
+          color: #fff;
+          cursor: pointer;
+          font-size: 13px;
+          font-weight: 600;
+        ">Retry</button>
+      `;
+      const spinner = loadingOverlay.querySelector('.loading-spinner');
+      if (spinner) spinner.style.display = 'none';
+    }
   }
 }
 

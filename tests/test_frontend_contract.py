@@ -757,12 +757,14 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_final_accessibility_layer_preserves_focus_and_user_preferences(self):
         accessibility = (STYLE_MODULES / "accessibility.css").read_text(encoding="utf-8")
-        stylesheet = 'styles/modules/accessibility.css?v={{VERSION}}'
+        bundle = (ROOT / "custom_components" / "blueprint_studio" / "www" / "styles" / "blueprint-studio.bundle.css").read_text(encoding="utf-8")
+        stylesheet = 'styles/blueprint-studio.bundle.css?v={{VERSION}}'
 
         self.assertIn(stylesheet, self.panel)
+        user_guide = (STYLE_MODULES / "user-guide.css").read_text(encoding="utf-8")
         self.assertGreater(
-            self.panel.index(stylesheet),
-            self.panel.index('styles/modules/user-guide.css?v={{VERSION}}'),
+            bundle.index(accessibility),
+            bundle.index(user_guide),
         )
         for selector in (
             "button,",
@@ -2235,10 +2237,12 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_shared_control_primitives_are_loaded_and_used(self):
         self.assertIn(
-            "/blueprint_studio/assets/styles/modules/primitives.css?v={{VERSION}}",
+            "/blueprint_studio/assets/styles/blueprint-studio.bundle.css?v={{VERSION}}",
             self.panel,
         )
         primitives = PRIMITIVES.read_text(encoding="utf-8")
+        bundle = (ROOT / "custom_components" / "blueprint_studio" / "www" / "styles" / "blueprint-studio.bundle.css").read_text(encoding="utf-8")
+        self.assertIn(primitives, bundle)
         for token in (
             "--surface-canvas",
             "--content-primary",
@@ -6634,6 +6638,15 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("Unknown binary files get a recoverable preview", files)
         self.assertIn(".asset-preview-state", styles)
         self.assertIn(".asset-preview-state-actions", styles)
+
+    def test_frontend_asset_bundles_are_up_to_date(self):
+        result = subprocess.run(
+            ["node", "scripts/bundle_assets.mjs", "--check"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
 
 
 if __name__ == "__main__":

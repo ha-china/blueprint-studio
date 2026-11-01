@@ -3,11 +3,15 @@ import { readFile } from 'node:fs/promises';
 
 const live = process.argv.includes('--live');
 const checks = [
-  ['ownership', 'scripts/audit_frontend_ownership.mjs'],
-  ['scoped wiring', 'scripts/audit_frontend_scoped_wiring.mjs'],
+  ['asset bundles', 'node', ['scripts/bundle_assets.mjs', '--check']],
+  ['ownership', 'node', ['scripts/audit_frontend_ownership.mjs']],
+  ['scoped wiring', 'node', ['scripts/audit_frontend_scoped_wiring.mjs']],
 ];
 const requiredArtifacts = [
   'custom_components/blueprint_studio/www/panels/panel_custom.html',
+  'custom_components/blueprint_studio/www/vendor/codemirror/codemirror.bundle.js',
+  'custom_components/blueprint_studio/www/vendor/codemirror/codemirror.bundle.css',
+  'custom_components/blueprint_studio/www/styles/blueprint-studio.bundle.css',
   'custom_components/blueprint_studio/www/modules/app.js',
   'custom_components/blueprint_studio/www/modules/translations.js',
   'custom_components/blueprint_studio/www/locales/en.json',
@@ -22,7 +26,7 @@ const run = (label, command, args = []) => {
   if (result.status !== 0) throw new Error(`${label} failed`);
 };
 
-for (const [label, script] of checks) run(label, 'node', [script]);
+for (const [label, command, args] of checks) run(label, command, args);
 run('pseudo locale', 'node', ['scripts/audit_frontend_pseudo_locale.mjs']);
 run('degraded states', 'node', ['scripts/audit_frontend_degraded_states.mjs']);
 for (const artifact of requiredArtifacts) await readFile(new URL(`../${artifact}`, import.meta.url));
