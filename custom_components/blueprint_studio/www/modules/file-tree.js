@@ -1962,11 +1962,28 @@ export async function loadDirectory(path) {
 
 
     if (result.error) {
-      console.error(`Failed to load directory ${path}:`, result.error);
+      console.warn(`Directory not accessible (${path}):`, result.error);
       // Directory no longer exists — clean up stale state
       state.failedDirectories.add(path);
       state.directoryErrors.set(path, result.error);
       state.loadedDirectories.delete(path);
+
+      let modified = false;
+      if (state.expandedFolders) {
+        for (const folder of Array.from(state.expandedFolders)) {
+          if (folder === path || folder.startsWith(path + "/")) {
+            state.expandedFolders.delete(folder);
+            state.failedDirectories.add(folder);
+            state.directoryErrors.set(folder, result.error);
+            state.loadedDirectories.delete(folder);
+            modified = true;
+          }
+        }
+      }
+
+      if (modified) {
+        saveSettings();
+      }
       return;
     }
 

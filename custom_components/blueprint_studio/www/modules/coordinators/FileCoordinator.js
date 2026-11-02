@@ -568,6 +568,10 @@ export async function loadFiles(force = false) {
                 folders: currentResult.folders || [],
                 files: currentResult.files || []
               });
+            } else {
+              console.warn("Failed to reload preserved path:", currentResult.error);
+              state.currentNavigationPath = "";
+              state.navigationHistory = [];
             }
           } catch (e) {
             console.warn("Failed to reload preserved path:", e);

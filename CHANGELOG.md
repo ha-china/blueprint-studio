@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Auto-prune missing directories from expanded folders** - Stale or deleted directory paths (e.g., from uninstalled add-ons or old SFTP sessions) that fail to load are now automatically pruned from `state.expandedFolders` and persisted to settings, eliminating repeated `Directory not found` errors on startup.
+- **Resilient subfolder reload fallback** - Automatically resets the active navigation path if a preserved subfolder path fails to load on refresh.
+
 
 ## [3.0.5] - 2026-11-02
 
