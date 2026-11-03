@@ -729,8 +729,7 @@ export function initFileCoordinator(callbacks) {
             showToast(t('toast.no_file_open'), "warning");
             return;
         }
-        const _v = window.__BS_VERSION__ || '0';
-        const { showBlueprintForm } = await import('../blueprint-form.js?v=' + _v);
+        const { showBlueprintForm } = await import('../blueprint-form.js');
         showBlueprintForm(tab.content);
     });
 

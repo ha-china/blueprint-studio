@@ -61,6 +61,7 @@ dmypy.json
 !/tests/js/ai_modes.mjs
 /scripts/*
 !/scripts/bundle_assets.mjs
+!/scripts/bundle_app.mjs
 !/scripts/audit_frontend_release.mjs
 !/scripts/audit_frontend_ownership.mjs
 !/scripts/audit_frontend_scoped_wiring.mjs
@@ -99,6 +100,7 @@ home-assistant_v2.db
 
 # Build & Distribution
 dist/
+!/custom_components/blueprint_studio/www/dist/
 build/
 *.spec
 

@@ -406,7 +406,7 @@ export async function init() {
       setTimeout(async () => {
         const tab = state.openTabs.find(t => t.path === state.blueprintFormTabPath);
         if (tab?.content) {
-          const { showBlueprintForm } = await import('./blueprint-form.js?v=' + (window.__BS_VERSION__ || '0'));
+          const { showBlueprintForm } = await import('./blueprint-form.js');
           await showBlueprintForm(tab.content);
         } else {
           // Tab not found or no content — clear persisted state

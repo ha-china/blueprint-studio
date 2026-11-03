@@ -7,9 +7,11 @@
     "test:frontend:ai-modes": "node scripts/audit_frontend_ai_modes.mjs",
     "test:frontend:ai-mode-wiring": "node tests/js/ai_modes.mjs",
     "bundle:assets": "node scripts/bundle_assets.mjs",
-    "build": "node scripts/bundle_assets.mjs"
+    "bundle:app": "node scripts/bundle_app.mjs",
+    "build": "node scripts/bundle_assets.mjs && node scripts/bundle_app.mjs"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "playwright-core": "1.62.1"
   }
 }

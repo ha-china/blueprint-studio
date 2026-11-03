@@ -6648,6 +6648,19 @@ class FrontendContractTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
 
+    def test_frontend_app_bundle_is_up_to_date(self):
+        result = subprocess.run(
+            ["node", "scripts/bundle_app.mjs", "--check"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+        self.assertIn(
+            "/blueprint_studio/assets/dist/app.bundle.js?v={{VERSION}}",
+            self.panel,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

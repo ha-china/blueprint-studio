@@ -1,17 +1,16 @@
 /** MAIN.JS | Purpose: * Application entry point. Waits for DOM ready, then initializes the app. */
 
-const _v = window.__BS_VERSION__ || '0';
+import * as appMod from './app.js';
+import { pwaAuth } from './pwa-auth.js';
+import { init } from './initialization.js';
+
+window.app = appMod;
+window.state = appMod.state;
+window.elements = appMod.elements;
+window.pwaAuth = pwaAuth;
 
 async function initApp() {
   try {
-    const appMod = await import('./app.js?v=' + _v);
-    window.app = appMod;
-    window.state = appMod.state;
-    window.elements = appMod.elements;
-
-    const { pwaAuth } = await import('./pwa-auth.js?v=' + _v);
-    window.pwaAuth = pwaAuth;
-
     // Initialize PWA authentication first
     const authSuccess = await pwaAuth.initialize();
 
@@ -51,8 +50,7 @@ async function initApp() {
       return;
     }
 
-    // Start the application — dynamic import with cache bust
-    const { init } = await import('./initialization.js?v=' + _v);
+    // Start the application
     await init();
   } catch (error) {
     console.error('Failed to initialize app:', error);

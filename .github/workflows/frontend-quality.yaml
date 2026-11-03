@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: Install dependencies
+        run: npm install
       - name: Frontend static release gate
         run: node scripts/audit_frontend_release.mjs
       - name: Pseudo-locale contract

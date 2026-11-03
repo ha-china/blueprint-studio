@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 const live = process.argv.includes('--live');
 const checks = [
   ['asset bundles', 'node', ['scripts/bundle_assets.mjs', '--check']],
+  ['app bundle', 'node', ['scripts/bundle_app.mjs', '--check']],
   ['ownership', 'node', ['scripts/audit_frontend_ownership.mjs']],
   ['scoped wiring', 'node', ['scripts/audit_frontend_scoped_wiring.mjs']],
 ];
@@ -12,9 +13,11 @@ const requiredArtifacts = [
   'custom_components/blueprint_studio/www/vendor/codemirror/codemirror.bundle.js',
   'custom_components/blueprint_studio/www/vendor/codemirror/codemirror.bundle.css',
   'custom_components/blueprint_studio/www/styles/blueprint-studio.bundle.css',
+  'custom_components/blueprint_studio/www/dist/app.bundle.js',
   'custom_components/blueprint_studio/www/modules/app.js',
   'custom_components/blueprint_studio/www/modules/translations.js',
   'custom_components/blueprint_studio/www/locales/en.json',
+  'scripts/bundle_app.mjs',
   'scripts/audit_frontend_ownership.mjs',
   'scripts/audit_frontend_scoped_wiring.mjs',
   'scripts/audit_frontend_pseudo_locale.mjs',

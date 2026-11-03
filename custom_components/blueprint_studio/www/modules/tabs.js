@@ -958,7 +958,7 @@ export async function closeTab(data, force = false) {
 
     // Handle closing the Blueprint Form tab — close the form, keep the file open
     if (state.blueprintFormActive && pane === 'secondary') {
-        const { closeBlueprintForm } = await import('./blueprint-form.js?v=' + (window.__BS_VERSION__ || '0'));
+        const { closeBlueprintForm } = await import('./blueprint-form.js');
         closeBlueprintForm();
         return;
     }
