@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Mapping
+from urllib.parse import urlparse
 
 
 class TransportError(Exception):
@@ -387,18 +388,26 @@ def validate_action(
             raise ValidationError(f"Field '{field}' is not a valid branch name")
         elif field == "hash" and not _valid_commit_reference(value):
             raise ValidationError("Field 'hash' is not a valid commit reference")
-        elif field == "name" and action == "instantiate_blueprint" and (
-            not isinstance(value, str)
-            or not value.strip()
-            or len(value) > 255
-            or any(char in value for char in "\r\n\x00")
+        elif (
+            field == "name"
+            and action == "instantiate_blueprint"
+            and (
+                not isinstance(value, str)
+                or not value.strip()
+                or len(value) > 255
+                or any(char in value for char in "\r\n\x00")
+            )
         ):
             raise ValidationError("Field 'name' is not a valid display name")
-        elif field in {"name", "remote"} and action != "instantiate_blueprint" and (
-            not isinstance(value, str)
-            or not value
-            or len(value) > 255
-            or any(char.isspace() for char in value)
+        elif (
+            field in {"name", "remote"}
+            and action != "instantiate_blueprint"
+            and (
+                not isinstance(value, str)
+                or not value
+                or len(value) > 255
+                or any(char.isspace() for char in value)
+            )
         ):
             raise ValidationError(f"Field '{field}' is not a valid name")
 
@@ -418,7 +427,11 @@ def validate_action(
         elif not data.get("path"):
             raise ValidationError("Missing required field: path")
 
-    if action == "ai_apply_proposal" and "selected_paths" in data and not data["selected_paths"]:
+    if (
+        action == "ai_apply_proposal"
+        and "selected_paths" in data
+        and not data["selected_paths"]
+    ):
         raise ValidationError("Field 'selected_paths' must not be empty")
 
     if transport == "sftp":
@@ -527,3 +540,108 @@ def _valid_commit_reference(value: Any) -> bool:
         and "\x00" not in value
         and not any(char in "\r\n" for char in value)
     )
+
+
+def validate_terminal_origin(
+    origin: str | None,
+    request_scheme: str,
+    request_host: str,
+    headers: Mapping[str, str] | None = None,
+    hass: Any = None,
+) -> bool:
+    """Validate whether the Origin header is authorized to access the terminal WebSocket.
+
+    Accepts the origin if:
+    1. It matches the request scheme and host (http(s)://<host>[:port]).
+    2. Home Assistant recognizes the origin as pointing to this instance (via
+       `is_hass_url`, or configured `external_url` / `internal_url`).
+    3. The origin matches the request's host/authority or reverse-proxy forwarding
+       headers (X-Forwarded-Host, Host, X-Forwarded-Port) for standard web schemes.
+    """
+    if not origin:
+        return False
+
+    clean_origin = origin.strip().rstrip("/")
+    if not clean_origin:
+        return False
+
+    # 1. Exact match with request scheme and host
+    expected_origin = f"{request_scheme}://{request_host}".rstrip("/")
+    if clean_origin == expected_origin:
+        return True
+
+    # 2. Check if the URL belongs to this Home Assistant instance
+    if hass is not None:
+        try:
+            from homeassistant.helpers.network import is_hass_url
+
+            if is_hass_url(hass, clean_origin):
+                return True
+        except Exception:
+            pass
+
+        config = getattr(hass, "config", None)
+        if config is not None:
+            for configured_url in (
+                getattr(config, "external_url", None),
+                getattr(config, "internal_url", None),
+            ):
+                if configured_url and clean_origin == str(configured_url).rstrip("/"):
+                    return True
+
+    # 3. Parse origin URL and validate hostname/scheme against request context
+    try:
+        origin_parsed = urlparse(clean_origin)
+    except Exception:
+        return False
+
+    if origin_parsed.scheme not in ("http", "https"):
+        return False
+
+    origin_host = origin_parsed.hostname
+    if not origin_host:
+        return False
+    origin_host = origin_host.lower()
+
+    # Collect allowed hosts and authorities from the request and forwarding headers
+    allowed_hosts: set[str] = set()
+    allowed_netlocs: set[str] = set()
+
+    headers_map = headers or {}
+    headers_lower = {k.lower(): v for k, v in headers_map.items()}
+
+    for host_value in (
+        request_host,
+        headers_lower.get("host"),
+        headers_lower.get("x-forwarded-host"),
+    ):
+        if not host_value:
+            continue
+        for item in host_value.split(","):
+            item_str = item.strip().lower()
+            if not item_str:
+                continue
+            allowed_netlocs.add(item_str)
+            if ":" in item_str:
+                allowed_hosts.add(item_str.split(":", 1)[0])
+            else:
+                allowed_hosts.add(item_str)
+
+    fwd_port = headers_lower.get("x-forwarded-port")
+    if fwd_port:
+        port_str = fwd_port.strip()
+        for h in list(allowed_hosts):
+            allowed_netlocs.add(f"{h}:{port_str}")
+
+    origin_netloc = origin_parsed.netloc.lower()
+    if origin_netloc in allowed_netlocs:
+        return True
+
+    # For default ports (80 for http, 443 for https) or omitted ports,
+    # match against hostname to accommodate reverse proxies that rewrite or drop the port.
+    if (
+        origin_parsed.port is None or origin_parsed.port in (80, 443)
+    ) and origin_host in allowed_hosts:
+        return True
+
+    return False

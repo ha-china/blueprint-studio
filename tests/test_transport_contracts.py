@@ -152,7 +152,9 @@ class TransportContractTests(unittest.TestCase):
                     "gitea_set_credentials", request, transport="post"
                 )
 
-    def test_blueprint_instance_display_names_allow_spaces_but_reject_control_input(self):
+    def test_blueprint_instance_display_names_allow_spaces_but_reject_control_input(
+        self,
+    ):
         request = {
             "content": "blueprint:\n  name: Fixture\n  domain: automation\n  input: {}\n",
             "input_values": {},
@@ -217,6 +219,181 @@ class TransportContractTests(unittest.TestCase):
             contracts.validate_stream("serve_file", {"action": "serve_file"})
         with self.assertRaises(contracts.ValidationError):
             contracts.validate_upload_metadata("a.yaml", False, False, "invalid", None)
+
+
+class TerminalOriginValidationTests(unittest.TestCase):
+    def setUp(self):
+        class MockConfig:
+            def __init__(self, external_url=None, internal_url=None):
+                self.external_url = external_url
+                self.internal_url = internal_url
+
+        class MockHass:
+            def __init__(self, external_url=None, internal_url=None):
+                self.config = MockConfig(external_url, internal_url)
+
+        self.mock_hass = MockHass(
+            external_url="https://ha.example.com",
+            internal_url="http://192.168.1.100:8123",
+        )
+        self.mock_hass_empty = MockHass()
+
+    def test_exact_scheme_and_host_match(self):
+        self.assertTrue(
+            contracts.validate_terminal_origin(
+                "http://homeassistant.local:8123",
+                request_scheme="http",
+                request_host="homeassistant.local:8123",
+                headers={"Host": "homeassistant.local:8123"},
+                hass=self.mock_hass,
+            )
+        )
+
+    def test_https_reverse_proxy_with_configured_external_url(self):
+        # Reproduces issue #105: HA reached via plain HTTP behind TLS-terminating proxy
+        self.assertTrue(
+            contracts.validate_terminal_origin(
+                "https://ha.example.com",
+                request_scheme="http",
+                request_host="ha.example.com",
+                headers={"Host": "ha.example.com", "X-Forwarded-Proto": "https"},
+                hass=self.mock_hass,
+            )
+        )
+
+    def test_https_reverse_proxy_direct_to_port_with_external_url(self):
+        # Direct connection to HA port 8123 with https Origin matching external_url
+        self.assertTrue(
+            contracts.validate_terminal_origin(
+                "https://ha.example.com",
+                request_scheme="http",
+                request_host="192.168.1.100:8123",
+                headers={"Host": "192.168.1.100:8123"},
+                hass=self.mock_hass,
+            )
+        )
+
+    def test_internal_url_match(self):
+        self.assertTrue(
+            contracts.validate_terminal_origin(
+                "http://192.168.1.100:8123",
+                request_scheme="http",
+                request_host="192.168.1.100:8123",
+                headers={"Host": "192.168.1.100:8123"},
+                hass=self.mock_hass,
+            )
+        )
+
+    def test_reverse_proxy_forwarded_host_without_configured_url(self):
+        # Even when external_url is not configured in HA, X-Forwarded-Host matches
+        self.assertTrue(
+            contracts.validate_terminal_origin(
+                "https://ha.example.com",
+                request_scheme="http",
+                request_host="192.168.1.100:8123",
+                headers={
+                    "Host": "192.168.1.100:8123",
+                    "X-Forwarded-Host": "ha.example.com",
+                    "X-Forwarded-Proto": "https",
+                },
+                hass=self.mock_hass_empty,
+            )
+        )
+
+    def test_reverse_proxy_with_custom_forwarded_port(self):
+        self.assertTrue(
+            contracts.validate_terminal_origin(
+                "https://ha.example.com:8443",
+                request_scheme="http",
+                request_host="192.168.1.100:8123",
+                headers={
+                    "Host": "192.168.1.100:8123",
+                    "X-Forwarded-Host": "ha.example.com",
+                    "X-Forwarded-Port": "8443",
+                },
+                hass=self.mock_hass_empty,
+            )
+        )
+
+    def test_standard_default_ports_normalized(self):
+        # Explicit :443 port in Origin
+        self.assertTrue(
+            contracts.validate_terminal_origin(
+                "https://ha.example.com:443",
+                request_scheme="http",
+                request_host="ha.example.com",
+                headers={"Host": "ha.example.com"},
+                hass=self.mock_hass_empty,
+            )
+        )
+
+    def test_reject_untrusted_cross_origin(self):
+        self.assertFalse(
+            contracts.validate_terminal_origin(
+                "https://evil.com",
+                request_scheme="https",
+                request_host="ha.example.com",
+                headers={"Host": "ha.example.com"},
+                hass=self.mock_hass,
+            )
+        )
+
+    def test_reject_subdomain_spoof(self):
+        self.assertFalse(
+            contracts.validate_terminal_origin(
+                "https://ha.example.com.evil.com",
+                request_scheme="https",
+                request_host="ha.example.com",
+                headers={"Host": "ha.example.com"},
+                hass=self.mock_hass,
+            )
+        )
+
+    def test_reject_empty_null_or_missing_origin(self):
+        self.assertFalse(
+            contracts.validate_terminal_origin(
+                None,
+                request_scheme="https",
+                request_host="ha.example.com",
+                headers={"Host": "ha.example.com"},
+                hass=self.mock_hass,
+            )
+        )
+        self.assertFalse(
+            contracts.validate_terminal_origin(
+                "null",
+                request_scheme="https",
+                request_host="ha.example.com",
+                headers={"Host": "ha.example.com"},
+                hass=self.mock_hass,
+            )
+        )
+        self.assertFalse(
+            contracts.validate_terminal_origin(
+                "",
+                request_scheme="https",
+                request_host="ha.example.com",
+                headers={"Host": "ha.example.com"},
+                hass=self.mock_hass,
+            )
+        )
+
+    def test_reject_invalid_schemes(self):
+        for scheme in (
+            "javascript:",
+            "file://",
+            "ftp://ha.example.com",
+            "data:text/html",
+        ):
+            self.assertFalse(
+                contracts.validate_terminal_origin(
+                    scheme,
+                    request_scheme="https",
+                    request_host="ha.example.com",
+                    headers={"Host": "ha.example.com"},
+                    hass=self.mock_hass,
+                )
+            )
 
 
 if __name__ == "__main__":

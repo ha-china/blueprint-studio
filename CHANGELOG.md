@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Terminal WebSocket connection failure behind HTTPS reverse proxies (`403 Invalid origin`)** - Replaced strict exact-match origin validation on `/api/blueprint_studio/terminal_ws` with contextual origin verification. Terminal WebSocket connections now succeed when Home Assistant is reached through TLS-terminating reverse proxies (such as Pangolin, Traefik, Nginx, or Cloudflare) by validating origins against Home Assistant's configured `external_url`/`internal_url`, Home Assistant's `is_hass_url()` instance check, and proxy forwarding headers (`X-Forwarded-Host`, `Host`, `X-Forwarded-Port`).
 - **Auto-prune missing directories from expanded folders** - Stale or deleted directory paths (e.g., from uninstalled add-ons or old SFTP sessions) that fail to load are now automatically pruned from `state.expandedFolders` and persisted to settings, eliminating repeated `Directory not found` errors on startup.
 - **Resilient subfolder reload fallback** - Automatically resets the active navigation path if a preserved subfolder path fails to load on refresh.
 
