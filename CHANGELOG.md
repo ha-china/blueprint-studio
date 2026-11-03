@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [3.0.6] - 2026-11-04
+
 ### Fixed
 
 - **Full frontend module compilation (Phase 2 Bundling)** - Compiled `main.js` and all 77+ frontend JavaScript modules into a single production bundle (`dist/app.bundle.js`) using esbuild. Frontend initialization now requires only 1 JavaScript request for the entire application logic instead of 77+ unbundled module HTTP requests, eliminating reverse proxy rate-limit rejection (`429 Too Many Requests`) and enabling sub-second cold starts while retaining `{ cache: 'no-store' }`.
-- **Terminal WebSocket connection failure behind HTTPS reverse proxies (`403 Invalid origin`)** - Replaced strict exact-match origin validation on `/api/blueprint_studio/terminal_ws` with contextual origin verification. Terminal WebSocket connections now succeed when Home Assistant is reached through TLS-terminating reverse proxies (such as Pangolin, Traefik, Nginx, or Cloudflare) by validating origins against Home Assistant's configured `external_url`/`internal_url`, Home Assistant's `is_hass_url()` instance check, and proxy forwarding headers (`X-Forwarded-Host`, `Host`, `X-Forwarded-Port`).
+- **Terminal WebSocket connection failure behind HTTPS reverse proxies (`403 Invalid origin`)** - Replaced strict exact-match origin validation on `/api/blueprint_studio/terminal_ws` with contextual origin verification ([#105](https://github.com/ha-china/blueprint-studio/issues/105)). Terminal WebSocket connections now succeed when Home Assistant is reached through TLS-terminating reverse proxies (such as Pangolin, Traefik, Nginx, or Cloudflare) by validating origins against Home Assistant's configured `external_url`/`internal_url`, Home Assistant's `is_hass_url()` instance check, and proxy forwarding headers (`X-Forwarded-Host`, `Host`, `X-Forwarded-Port`).
 - **Auto-prune missing directories from expanded folders** - Stale or deleted directory paths (e.g., from uninstalled add-ons or old SFTP sessions) that fail to load are now automatically pruned from `state.expandedFolders` and persisted to settings, eliminating repeated `Directory not found` errors on startup.
 - **Resilient subfolder reload fallback** - Automatically resets the active navigation path if a preserved subfolder path fails to load on refresh.
 
@@ -1160,7 +1163,8 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 - **1.2.0** - GitHub Integration, Pin Favorites & Auto-Refresh
 - **1.0.0** - First stable release
 
-[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.5...HEAD
+[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.6...HEAD
+[3.0.6]: https://github.com/ha-china/blueprint-studio/compare/v3.0.5...v3.0.6
 [3.0.5]: https://github.com/ha-china/blueprint-studio/compare/v3.0.4...v3.0.5
 [3.0.4]: https://github.com/ha-china/blueprint-studio/compare/v3.0.3...v3.0.4
 [3.0.3]: https://github.com/ha-china/blueprint-studio/compare/v3.0.2...v3.0.3
