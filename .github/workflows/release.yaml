@@ -17,11 +17,12 @@ jobs:
 
       - name: Build blueprint_studio.zip
         run: |
-          cd custom_components
-          zip -r ../blueprint_studio.zip blueprint_studio \
-            --exclude "**/__pycache__/*" \
-            --exclude "**/.pytest_cache/*" \
-            --exclude "**/.DS_Store"
+          cd custom_components/blueprint_studio
+          zip -r ../../blueprint_studio.zip . \
+            -x "*__pycache__*" \
+            -x "*.pytest_cache*" \
+            -x "*.DS_Store*" \
+            -x "*.claude*"
 
       - name: Upload zip to release
         uses: softprops/action-gh-release@v2
