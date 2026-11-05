@@ -363,6 +363,9 @@ async function _renderForm(blueprintContent, bpInfo, preservedValues = {}) {
 
     function _checkValidity() {
         const allFilled = requiredKeys.every(k => {
+            // Skip hidden conditional fields — they are not reachable by the user
+            const fieldEl = previewEl.querySelector(`[data-field="${k}"]`);
+            if (fieldEl && fieldEl.style.display === 'none') return true;
             const v = _formData[k];
             if (Array.isArray(v)) return v.length > 0;
             if (typeof v === 'boolean') return true;
@@ -395,6 +398,9 @@ async function _renderForm(blueprintContent, bpInfo, preservedValues = {}) {
     previewEl.querySelector('#bf-btn-use').addEventListener('click', async () => {
         // Find first unfilled required field
         const firstInvalid = requiredKeys.find(k => {
+            // Skip conditionally hidden fields
+            const fieldEl = previewEl.querySelector(`[data-field="${k}"]`);
+            if (fieldEl && fieldEl.style.display === 'none') return false;
             const v = _formData[k];
             if (Array.isArray(v)) return v.length === 0;
             if (typeof v === 'boolean') return false;
@@ -512,8 +518,27 @@ function _fieldHtml(inp, devices, areas, entities, labels, floors, themes, addon
     const sType = Object.keys(selector)[0] || 'text';
     const sCfg  = selector[sType] || {};
     const control = _controlHtml(inp, sType, sCfg, devices, areas, entities, labels, floors, themes, addons);
+
+    // 2026.11 conditional visibility: encode visible: { field, value } as data attributes.
+    // A field may also declare visible: false (always hidden — authoring tool only) or
+    // visible: true (always visible — same as omitting). We normalise to data-visible-field
+    // + data-visible-value. Fields are hidden by default when a condition is set; wiring
+    // in _wireControls will show/hide them reactively.
+    let visibleAttrs = '';
+    let hiddenStyle = '';
+    if (inp.visible !== undefined && inp.visible !== null && inp.visible !== true) {
+        if (inp.visible === false) {
+            hiddenStyle = ' style="display:none;"';
+        } else if (typeof inp.visible === 'object' && inp.visible.field) {
+            const vField = String(inp.visible.field);
+            const vValue = inp.visible.value !== undefined ? String(inp.visible.value) : '';
+            visibleAttrs = ` data-visible-field="${_esc(vField)}" data-visible-value="${_esc(vValue)}"`;
+            hiddenStyle = ' style="display:none;"';  // hidden until condition is evaluated
+        }
+    }
+
     return `
-        <div class="bf-field" data-field="${_esc(inp.key)}">
+        <div class="bf-field" data-field="${_esc(inp.key)}"${visibleAttrs}${hiddenStyle}>
             <label class="bf-label">
                 ${_esc(inp.name)}${inp.required ? ' <span class="bf-required" title="Required">*</span>' : ''}
                 ${inp.description ? `
@@ -855,6 +880,23 @@ function _targetHtml(key, entities, areas, devices, defaultVal) {
 
 // ─── Control Wiring ──────────────────────────────────────────────────────────
 
+/**
+ * 2026.11 — Evaluate all conditional `visible:` fields in a panel.
+ * Fields with data-visible-field / data-visible-value are shown when the
+ * controlling field's current value matches; hidden otherwise.
+ *
+ * @param {Element} modal    - The root panel element to search within.
+ * @param {object}  formData - Live form data map (key → value).
+ */
+function _evaluateVisibility(modal, formData) {
+    modal.querySelectorAll('[data-visible-field]').forEach(fieldEl => {
+        const controlKey = fieldEl.dataset.visibleField;
+        const expectedValue = fieldEl.dataset.visibleValue ?? '';
+        const currentValue = String(formData[controlKey] ?? '');
+        fieldEl.style.display = currentValue === expectedValue ? '' : 'none';
+    });
+}
+
 function _wireControls(modal, formData) {
     // Text, select, time, date, icon, etc.
     modal.querySelectorAll('[data-key]').forEach(el => {
@@ -1021,6 +1063,12 @@ function _wireControls(modal, formData) {
         wrap.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
         update();
     });
+
+    // 2026.11: Evaluate initial visibility for all conditional fields, then
+    // re-evaluate on every change so dependent fields show/hide reactively.
+    _evaluateVisibility(modal, formData);
+    modal.addEventListener('input', () => _evaluateVisibility(modal, formData));
+    modal.addEventListener('change', () => _evaluateVisibility(modal, formData));
 }
 
 function _wireSearchDropdown(container, formData) {

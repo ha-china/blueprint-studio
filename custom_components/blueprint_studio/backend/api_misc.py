@@ -133,8 +133,9 @@ async def convert_to_blueprint(ai_manager, data, hass):
 
     content = data.get("content", "")
     blueprint_name = data.get("blueprint_name", "")
+    source_url = data.get("source_url", "")
     result = await hass.async_add_executor_job(
-        convert_automation_to_blueprint, content, blueprint_name
+        convert_automation_to_blueprint, content, blueprint_name, source_url
     )
     return json_response({"success": True, "blueprint": result})
 

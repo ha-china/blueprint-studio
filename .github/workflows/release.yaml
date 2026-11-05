@@ -1,0 +1,29 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Build and attach release zip
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build blueprint_studio.zip
+        run: |
+          cd custom_components
+          zip -r ../blueprint_studio.zip blueprint_studio \
+            --exclude "**/__pycache__/*" \
+            --exclude "**/.pytest_cache/*" \
+            --exclude "**/.DS_Store"
+
+      - name: Upload zip to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: blueprint_studio.zip

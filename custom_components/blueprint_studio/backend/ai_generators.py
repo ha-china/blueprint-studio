@@ -419,7 +419,7 @@ def get_scene_description(scene_type: str | None, name: str) -> str:
     return f"Custom {name.lower()} scene"
 
 
-def convert_automation_to_blueprint(content: str, name: str = "") -> str:
+def convert_automation_to_blueprint(content: str, name: str = "", source_url: str = "") -> str:
     """Convert an automation YAML to a blueprint.
 
     Algorithm:
@@ -1484,12 +1484,22 @@ def convert_automation_to_blueprint(content: str, name: str = "") -> str:
     else:
         inputs_section = "  input: {}"
 
+    # Detect domain: scripts have a top-level `sequence:` key; automations have `trigger:`/`action:`
+    if isinstance(auto, dict) and 'sequence' in auto and 'trigger' not in auto:
+        bp_domain = 'script'
+    else:
+        bp_domain = 'automation'
+
+    # Optional source_url line (enables "Re-import blueprint" in HA UI)
+    source_url_line = f"  source_url: \"{source_url}\"\n" if source_url else ""
+
     blueprint_yaml = (
         f"blueprint:\n"
         f"  name: \"{bp_name}\"\n"
         f"  description: \"{bp_description.replace(chr(34), chr(39))}\"\n"
-        f"  domain: automation\n"
+        f"  domain: {bp_domain}\n"
         f"  author: \"\"\n"
+        f"{source_url_line}"
         f"{inputs_section}\n"
         f"\n"
         f"{body}\n"
@@ -1554,7 +1564,7 @@ def parse_blueprint_inputs(content: str) -> dict:
         if "input" in val and isinstance(val["input"], dict):
             return None
         has_default = "default" in val
-        return {
+        result = {
             "key": key,
             "name": val.get("name", key.replace("_", " ").title()),
             "description": val.get("description", ""),
@@ -1562,6 +1572,10 @@ def parse_blueprint_inputs(content: str) -> dict:
             "required": not has_default,
             "selector": val.get("selector", {"text": {}}),
         }
+        # 2026.11: conditional visibility — forward `visible:` block if present
+        if "visible" in val:
+            result["visible"] = val["visible"]
+        return result
 
     sections = []
     top_inputs = []

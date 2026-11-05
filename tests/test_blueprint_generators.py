@@ -103,6 +103,44 @@ mode: single
         self.assertIn("selector:\n        app: {}", result)
         self.assertNotIn("selector:\n        addon: {}", result)
 
+    def test_convert_script_detects_script_domain_and_source_url(self):
+        content = """alias: Test script
+sequence:
+  - action: light.turn_on
+    target:
+      entity_id: light.living_room
+"""
+        result = self.generators.convert_automation_to_blueprint(
+            content, "Test Script", source_url="https://github.com/example/repo/blueprint.yaml"
+        )
+        self.assertIn("domain: script", result)
+        self.assertIn('source_url: "https://github.com/example/repo/blueprint.yaml"', result)
+
+    def test_parse_blueprint_inputs_extracts_visible(self):
+        blueprint = """blueprint:
+  name: Conditional Blueprint
+  domain: automation
+  input:
+    enable_notifications:
+      name: Enable Notifications
+      selector:
+        boolean: {}
+    notify_target:
+      name: Notify Target
+      visible:
+        field: enable_notifications
+        value: true
+      selector:
+        text: {}
+"""
+        parsed = self.generators.parse_blueprint_inputs(blueprint)
+        inputs = parsed["sections"][0]["inputs"]
+        self.assertEqual(len(inputs), 2)
+        notify_target = next(i for i in inputs if i["key"] == "notify_target")
+        self.assertIn("visible", notify_target)
+        self.assertEqual(notify_target["visible"]["field"], "enable_notifications")
+        self.assertEqual(notify_target["visible"]["value"], True)
+
 
 if __name__ == "__main__":
     unittest.main()

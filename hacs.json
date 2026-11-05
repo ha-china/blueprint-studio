@@ -2,5 +2,7 @@
   "name": "Blueprint Studio",
   "content_in_root": false,
   "homeassistant": "2024.7.0",
-  "render_readme": true
+  "render_readme": true,
+  "zip_release": true,
+  "filename": "blueprint_studio.zip"
 }

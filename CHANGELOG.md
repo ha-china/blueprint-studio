@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [3.0.7] - 2026-11-05
+
+### Added
+
+- **Marketplace / HACS download tracking**: Configured `zip_release` and `filename` in `hacs.json` and added a GitHub Actions automated release packaging workflow (`.github/workflows/release.yaml`) that builds and attaches `blueprint_studio.zip` to published releases, restoring download count metrics in the Home Assistant Marketplace / HACS.
+- **Home Assistant 2026.11 Blueprint conditional inputs (`visible:`)**: Added backend parsing support for input `visible:` selectors and reactive conditional visibility rendering in the "Use Blueprint" form (`blueprint-form.js`). Required fields that are conditionally hidden are dynamically skipped during form validation.
+- **Script domain and source URL auto-detection**: `convert_automation_to_blueprint` now automatically distinguishes between `script` and `automation` domains based on YAML structure and optionally includes `source_url` metadata in generated blueprints to enable Home Assistant's built-in "Re-import blueprint" functionality.
+
+
 ## [3.0.6] - 2026-11-04
 
 ### Fixed
@@ -1163,7 +1172,8 @@ Bring AI intelligence directly into your Home Assistant workflow with flexible p
 - **1.2.0** - GitHub Integration, Pin Favorites & Auto-Refresh
 - **1.0.0** - First stable release
 
-[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.6...HEAD
+[Unreleased]: https://github.com/ha-china/blueprint-studio/compare/v3.0.7...HEAD
+[3.0.7]: https://github.com/ha-china/blueprint-studio/compare/v3.0.6...v3.0.7
 [3.0.6]: https://github.com/ha-china/blueprint-studio/compare/v3.0.5...v3.0.6
 [3.0.5]: https://github.com/ha-china/blueprint-studio/compare/v3.0.4...v3.0.5
 [3.0.4]: https://github.com/ha-china/blueprint-studio/compare/v3.0.3...v3.0.4
