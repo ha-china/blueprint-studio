@@ -25,6 +25,10 @@
           return;
         }
 
+        if (token.autolink) {
+          // prevent converting autolink to html entities
+          token.autolink = false;
+        }
         token.text = mangledEmail;
         token.tokens[0].text = mangledEmail;
       },
